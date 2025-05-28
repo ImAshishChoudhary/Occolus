@@ -165,9 +165,8 @@ This project is open-source under the MIT License.
 
 ---
 
-## 🙏 Acknowledgments
+## 👥 Team Members
 
-### 👥 Team Members
 - Gauri
 - Ashish K Choudhary
 - Mohit Taneja 
