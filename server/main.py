@@ -170,14 +170,15 @@ def discover_candidates(request: DiscoveryRequest):
     
     drug_db = pd.read_csv("drug_db.csv")
     results = []
-    for _, row in drug_db.iterrows():
+    
+    print(f"🔍 Processing {len(drug_db)} drugs...")
+    
+    for idx, row in drug_db.iterrows():
         smiles = row['smiles']
         name = row['name']
 
-        drug_info = fetch_drug_info(name)
-        if not drug_info or drug_info["smiles"] == "N/A":
-            continue
-
+        # Skip PubChem API call - get info from local database or use defaults
+        # This makes the endpoint MUCH faster
         drug_fp = smiles_to_fingerprint(smiles)
         drug_tensor = torch.tensor([drug_fp], dtype=torch.float32)
 
@@ -185,20 +186,32 @@ def discover_candidates(request: DiscoveryRequest):
             score = model(protein_tensor, drug_tensor).item()
 
         image_base64 = smiles_to_image_base64(smiles)
+        print(f"🔍 {idx+1}/{len(drug_db)}: {name}, Score: {score:.4f}, Image: {'✅' if image_base64 else '❌'}")
 
         results.append({
             "name": name,
             "smiles": smiles,
             "score": round(score, 4),
-            "image_base64": image_base64,
-            **drug_info
+            "image_base64": image_base64
         })
 
     results = sorted(results, key=lambda x: x["score"], reverse=True)[:request.top_n]
+    print(f"🔍 Top {len(results)} candidates selected")
+    
+    # Now enrich only the top candidates with PubChem data
+    for result in results:
+        drug_info = fetch_drug_info(result["name"])
+        if drug_info and drug_info.get("smiles") != "N/A":
+            result.update(drug_info)
+        print(f"🔍 Enriched: {result['name']}")
 
     prompt = build_prompt(request.uniprot_id, results)
-    response = ai_client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
-    insights = response.text
+    try:
+        response = ai_client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+        insights = response.text
+    except Exception as e:
+        print(f"⚠️ Gemini API error: {e}")
+        insights = "AI insights temporarily unavailable."
 
     return {
         "uniprot_id": request.uniprot_id,

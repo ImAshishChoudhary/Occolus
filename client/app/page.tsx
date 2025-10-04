@@ -76,6 +76,7 @@ export default function Home() {
     setInitiatingDiscovery(true);
     setStep('discovery');
     try {
+      console.log("🔍 Starting discovery for protein:", protein?.primaryAccession);
       const response = await fetch(`${apiUrl}/discover`, {
         method: "POST",
         headers: {
@@ -87,11 +88,33 @@ export default function Home() {
           top_n: 5
         })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      console.log("🔍 Discovery Response:", data);
+      console.log("🔍 Top Candidates Count:", data.top_candidates?.length);
+      
+      if (data.top_candidates && data.top_candidates.length > 0) {
+        console.log("🔍 First candidate:", data.top_candidates[0].name);
+        console.log("🔍 First candidate has image_base64:", !!data.top_candidates[0].image_base64);
+        if (data.top_candidates[0].image_base64) {
+          console.log("🔍 First candidate image_base64 length:", data.top_candidates[0].image_base64.length);
+          console.log("🔍 First 50 chars:", data.top_candidates[0].image_base64.substring(0, 50));
+        }
+      } else {
+        console.warn("⚠️ No top_candidates in response!");
+      }
+      
       setProteinDrugDiscoveryResult(data);
       setStep('done');
     } catch (error) {
-      console.error("Error in drug discovery:", error);
+      console.error("❌ Error in drug discovery:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(`Error: ${errorMessage}`);
+      setStep('search');
     }
     setInitiatingDiscovery(false);
   };
@@ -405,7 +428,7 @@ export default function Home() {
                 {drawerLoading ? (
                   <div className="flex flex-col items-center justify-center h-full gap-6">
                     <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#111]" />
-                    <div className="text-xl font-medium text-[#111]">Researching "{query}"...</div>
+                    <div className="text-xl font-medium text-[#111]">Researching &ldquo;{query}&rdquo;...</div>
                     <div className="text-base text-[#888]">The agent is searching UniProt and analyzing results.</div>
                   </div>
                 ) : protein ? (
@@ -468,8 +491,28 @@ export default function Home() {
                                   <div className="font-bold text-lg text-[#111] mb-2">{candidate.name}</div>
                                   <div className="text-sm text-[#444] mb-1">Score: {(candidate.score * 100).toFixed(1)}%</div>
                                   <div className="text-xs text-[#888] mb-2 break-all">SMILES: {candidate.smiles}</div>
-                                  {candidate.image_base64 && (
-                                    <img src={`data:image/png;base64,${candidate.image_base64}`} alt={candidate.name} className="w-32 h-32 object-contain border rounded bg-white" />
+                                  {candidate.image_base64 ? (
+                                    <img 
+                                      src={`data:image/png;base64,${candidate.image_base64}`} 
+                                      alt={candidate.name} 
+                                      className="w-32 h-32 object-contain border rounded bg-white"
+                                      onError={(e) => {
+                                        console.error(`❌ Failed to load image for ${candidate.name}`);
+                                        e.currentTarget.style.display = 'none';
+                                        const parent = e.currentTarget.parentElement;
+                                        if (parent) {
+                                          const errorDiv = document.createElement('div');
+                                          errorDiv.textContent = '⚠️ Image failed to load';
+                                          errorDiv.className = 'text-red-500 text-xs';
+                                          parent.appendChild(errorDiv);
+                                        }
+                                      }}
+                                      onLoad={() => console.log(`✅ Image loaded for ${candidate.name}`)}
+                                    />
+                                  ) : (
+                                    <div className="w-32 h-32 border rounded bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                                      No image
+                                    </div>
                                   )}
                                 </div>
                               ))}
