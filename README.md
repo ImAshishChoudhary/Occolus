@@ -17,6 +17,10 @@
 
 ---
 
+<img width="1838" height="899" alt="image" src="https://github.com/user-attachments/assets/370954d2-a41a-45c8-be0f-05611423b1f4" />
+
+---
+
 ## 📋 Table of Contents
 
 - [🎯 Problem Statement](#-problem-statement)
@@ -32,8 +36,6 @@
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
 
-
-<img width="1838" height="899" alt="image" src="https://github.com/user-attachments/assets/370954d2-a41a-45c8-be0f-05611423b1f4" />
 
 ---
 
