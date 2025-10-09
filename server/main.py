@@ -87,9 +87,9 @@ def generate_heatmap(protein_grad, drug_grad):
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000"
-]
+# Get CORS origins from environment variable or use defaults
+cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+origins = [origin.strip() for origin in cors_origins_env.split(",")]
 
 app.add_middleware(
     CORSMiddleware,
