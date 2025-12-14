@@ -1010,6 +1010,842 @@ def get_protein_structure(request: ProteinStructureRequest):
         return {"error": str(e)}
 
 
+# ==================== DRUG DISCOVERY ENDPOINTS ====================
+
+from drug_discovery import (
+    calculate_admet_properties,
+    generate_analogs,
+    scaffold_hop,
+    virtual_screen,
+    submit_docking_job,
+    optimize_lead,
+    calculate_similarity,
+    generate_novel_drug,
+    get_3d_coordinates,
+    get_protein_3d_structure
+)
+
+
+class ADMETRequest(BaseModel):
+    smiles: str
+
+
+class AnalogRequest(BaseModel):
+    smiles: str
+    num_analogs: int = 10
+
+
+class DockingRequest(BaseModel):
+    protein_pdb: str
+    ligand_smiles: str
+
+
+class OptimizeRequest(BaseModel):
+    smiles: str
+    target_property: str = "drug_likeness"
+
+
+class SimilarityRequest(BaseModel):
+    smiles1: str
+    smiles2: str
+
+
+@app.post("/admet")
+def predict_admet(request: ADMETRequest):
+    """
+    Predict ADMET properties for a molecule
+    - Absorption, Distribution, Metabolism, Excretion, Toxicity
+    - Drug-likeness scores (Lipinski, Veber, Lead-likeness)
+    """
+    logger.info(f"=== ADMET PREDICTION === SMILES: {request.smiles[:50]}...")
+    
+    result = calculate_admet_properties(request.smiles)
+    
+    if "error" in result:
+        return {"error": result["error"]}
+    
+    # Generate molecule image
+    try:
+        mol = Chem.MolFromSmiles(request.smiles)
+        if mol:
+            img = Draw.MolToImage(mol, size=(300, 300))
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            result["image_base64"] = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    except:
+        pass
+    
+    logger.info(f"ADMET complete: Drug-likeness={result.get('drug_likeness_score', 'N/A')}")
+    return result
+
+
+@app.post("/generate-analogs")
+def generate_molecule_analogs(request: AnalogRequest):
+    """
+    Generate molecular analogs using bioisosteric replacements,
+    methylation, fluorination, and other modifications
+    """
+    logger.info(f"=== ANALOG GENERATION === SMILES: {request.smiles[:50]}...")
+    
+    analogs = generate_analogs(request.smiles, request.num_analogs)
+    
+    logger.info(f"Generated {len(analogs)} analogs")
+    return {
+        "parent_smiles": request.smiles,
+        "analogs": analogs,
+        "count": len(analogs)
+    }
+
+
+@app.post("/scaffold-hop")
+def perform_scaffold_hop(request: AnalogRequest):
+    """
+    Generate molecules with different scaffolds but similar pharmacophore
+    """
+    logger.info(f"=== SCAFFOLD HOP === SMILES: {request.smiles[:50]}...")
+    
+    results = scaffold_hop(request.smiles, request.num_analogs)
+    
+    logger.info(f"Generated {len(results)} scaffold variants")
+    return {
+        "parent_smiles": request.smiles,
+        "scaffold_variants": results,
+        "count": len(results)
+    }
+
+
+@app.post("/dock")
+def run_docking(request: DockingRequest):
+    """
+    Submit docking job to estimate binding affinity
+    Returns estimated binding energy in kcal/mol
+    """
+    logger.info(f"=== DOCKING === Ligand: {request.ligand_smiles[:50]}...")
+    
+    result = submit_docking_job(request.protein_pdb, request.ligand_smiles)
+    
+    logger.info(f"Docking complete: Affinity={result.get('estimated_affinity_kcal', 'N/A')} kcal/mol")
+    return result
+
+
+@app.post("/optimize-lead")
+def run_lead_optimization(request: OptimizeRequest):
+    """
+    Analyze a lead compound and suggest optimizations
+    Returns improvement suggestions and optimized analogs
+    """
+    logger.info(f"=== LEAD OPTIMIZATION === SMILES: {request.smiles[:50]}...")
+    
+    # Get current properties
+    current_props = calculate_admet_properties(request.smiles)
+    
+    # Get optimization suggestions
+    suggestions = optimize_lead(request.smiles, request.target_property)
+    
+    return {
+        "parent_smiles": request.smiles,
+        "current_properties": current_props,
+        "suggestions": suggestions
+    }
+
+
+@app.post("/similarity")
+def calculate_mol_similarity(request: SimilarityRequest):
+    """
+    Calculate Tanimoto similarity between two molecules
+    """
+    similarity = calculate_similarity(request.smiles1, request.smiles2)
+    
+    return {
+        "smiles1": request.smiles1,
+        "smiles2": request.smiles2,
+        "tanimoto_similarity": round(similarity, 4),
+        "similar": similarity > 0.7
+    }
+
+
+@app.post("/drug-discovery-full")
+def full_drug_discovery_pipeline(request: UnifiedDiscoveryRequest):
+    """
+    FULL Drug Discovery Pipeline with all capabilities:
+    1. Literature search
+    2. Drug candidate prediction
+    3. ADMET analysis for top candidates
+    4. Analog generation
+    5. Docking estimation
+    6. AI-powered report
+    """
+    logger.info(f"=== FULL DRUG DISCOVERY PIPELINE === Query: {request.query}")
+    
+    # Run unified discovery first
+    base_result = unified_discovery(request)
+    
+    # Enhance with ADMET for top candidates
+    if base_result.get("top_candidates"):
+        for candidate in base_result["top_candidates"]:
+            try:
+                admet = calculate_admet_properties(candidate["smiles"])
+                candidate["admet"] = {
+                    "drug_likeness_score": admet.get("drug_likeness_score"),
+                    "lipinski_pass": admet.get("lipinski_pass"),
+                    "bbb_penetration": admet.get("bbb_penetration", {}).get("class"),
+                    "oral_absorption": admet.get("oral_absorption", {}).get("class"),
+                    "hepatotoxicity_risk": admet.get("hepatotoxicity_risk", {}).get("class"),
+                    "cardiotoxicity_risk": admet.get("cardiotoxicity_risk", {}).get("class"),
+                }
+                
+                # Generate analogs for top 3
+                if base_result["top_candidates"].index(candidate) < 3:
+                    candidate["analogs"] = generate_analogs(candidate["smiles"], 3)
+                
+            except Exception as e:
+                logger.warning(f"ADMET error for {candidate.get('name')}: {e}")
+    
+    base_result["tools_used"].append("admet_prediction")
+    base_result["tools_used"].append("analog_generation")
+    
+    logger.info("Full drug discovery pipeline complete")
+    return base_result
+
+
+# ==================== DE NOVO DRUG DESIGN ENDPOINTS ====================
+
+class DeNovoRequest(BaseModel):
+    seed_smiles: Optional[str] = None
+    num_generations: int = 30
+    population_size: int = 15
+
+
+@app.post("/design-drug")
+def design_new_drug(request: DeNovoRequest):
+    """
+    Design novel drug molecules using genetic algorithm
+    Can start from scratch or evolve from a seed molecule
+    """
+    logger.info(f"=== DE NOVO DRUG DESIGN === Seed: {request.seed_smiles or 'Random'}")
+    
+    novel_drugs = generate_novel_drug(
+        seed_smiles=request.seed_smiles,
+        num_generations=request.num_generations,
+        population_size=request.population_size
+    )
+    
+    logger.info(f"Generated {len(novel_drugs)} novel drug candidates")
+    
+    return {
+        "seed_smiles": request.seed_smiles,
+        "novel_drugs": novel_drugs,
+        "count": len(novel_drugs),
+        "method": "Genetic Algorithm",
+        "generations": request.num_generations
+    }
+
+
+# ==================== 3D VISUALIZATION ENDPOINTS ====================
+
+class Molecule3DRequest(BaseModel):
+    smiles: str
+
+
+class Protein3DRequest(BaseModel):
+    uniprot_id: str
+
+
+@app.post("/molecule-3d-coords")
+def get_molecule_3d_coords(request: Molecule3DRequest):
+    """
+    Generate 3D coordinates for a molecule
+    Returns MOL block, PDB, and atom coordinates for 3Dmol.js
+    """
+    logger.info(f"=== 3D COORDINATES === SMILES: {request.smiles[:50]}...")
+    
+    coords = get_3d_coordinates(request.smiles)
+    
+    if "error" in coords:
+        return {"error": coords["error"]}
+    
+    # Also generate 2D image
+    try:
+        mol = Chem.MolFromSmiles(request.smiles)
+        if mol:
+            img = Draw.MolToImage(mol, size=(300, 300))
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            coords["image_2d"] = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    except:
+        pass
+    
+    logger.info(f"3D coordinates generated: {coords.get('num_atoms', 0)} atoms")
+    return coords
+
+
+@app.post("/protein-3d-coords")
+def get_protein_3d_coords(request: Protein3DRequest):
+    """
+    Fetch protein 3D structure from AlphaFold or PDB
+    Returns PDB content for 3Dmol.js visualization
+    """
+    logger.info(f"=== PROTEIN 3D STRUCTURE === UniProt: {request.uniprot_id}")
+    
+    structure = get_protein_3d_structure(request.uniprot_id)
+    
+    if "error" in structure:
+        return {"error": structure["error"]}
+    
+    logger.info(f"Protein structure fetched: {structure.get('source', 'Unknown')}")
+    return structure
+
+
+# ==================== REPORT EXPORT ENDPOINTS ====================
+
+from fastapi.responses import StreamingResponse
+import re
+import unicodedata
+
+class ExportReportRequest(BaseModel):
+    query: str
+    insights: str
+    protein_info: Optional[dict] = None
+    top_candidates: Optional[List[dict]] = None
+    novel_drugs: Optional[List[dict]] = None
+    papers: Optional[List[dict]] = None
+
+
+def sanitize_text(text: str) -> str:
+    """Remove or replace problematic characters for PDF/DOCX"""
+    if not text:
+        return ""
+    # Normalize unicode
+    text = unicodedata.normalize('NFKD', str(text))
+    # Remove non-printable characters
+    text = ''.join(char for char in text if unicodedata.category(char)[0] != 'C' or char in '\n\r\t')
+    # Replace problematic characters
+    text = text.replace('\u2019', "'").replace('\u2018', "'")
+    text = text.replace('\u201c', '"').replace('\u201d', '"')
+    text = text.replace('\u2013', '-').replace('\u2014', '-')
+    text = text.replace('\u2026', '...')
+    text = text.replace('\u00a0', ' ')
+    # Remove any remaining non-ASCII if needed
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    return text
+
+
+@app.post("/export-pdf")
+def export_report_pdf(request: ExportReportRequest):
+    """
+    Generate a professional PDF research report with molecule images
+    """
+    logger.info(f"=== PDF EXPORT === Query: {request.query}")
+    
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch, cm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak, KeepTogether, HRFlowable
+        from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=50,
+            leftMargin=50,
+            topMargin=50,
+            bottomMargin=50
+        )
+        
+        # Styles
+        styles = getSampleStyleSheet()
+        # Use unique style names to avoid conflicts
+        styles.add(ParagraphStyle(
+            name='ReportTitle',
+            parent=styles['Title'],
+            fontSize=22,
+            spaceAfter=10,
+            textColor=colors.HexColor('#1a1a1a'),
+            alignment=TA_CENTER
+        ))
+        styles.add(ParagraphStyle(
+            name='ReportSubtitle',
+            parent=styles['Normal'],
+            fontSize=12,
+            spaceAfter=5,
+            textColor=colors.HexColor('#444444'),
+            alignment=TA_CENTER
+        ))
+        styles.add(ParagraphStyle(
+            name='ReportSection',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceBefore=15,
+            spaceAfter=8,
+            textColor=colors.HexColor('#1a1a1a'),
+            borderPadding=5
+        ))
+        styles.add(ParagraphStyle(
+            name='ReportBody',
+            parent=styles['Normal'],
+            fontSize=9,
+            spaceBefore=3,
+            spaceAfter=3,
+            alignment=TA_JUSTIFY,
+            textColor=colors.HexColor('#333333'),
+            leading=12
+        ))
+        styles.add(ParagraphStyle(
+            name='ReportSmall',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.HexColor('#666666'),
+            leading=10
+        ))
+        styles.add(ParagraphStyle(
+            name='ReportDate',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#888888'),
+            alignment=TA_CENTER,
+            spaceAfter=20
+        ))
+        
+        story = []
+        
+        # Title
+        story.append(Paragraph("Drug Discovery Research Report", styles['ReportTitle']))
+        story.append(Paragraph(sanitize_text(request.query), styles['ReportSubtitle']))
+        story.append(Paragraph(
+            f"Generated: {pd.Timestamp.now().strftime('%B %d, %Y')} | OccolusAI Platform",
+            styles['ReportDate']
+        ))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#e0e0e0')))
+        story.append(Spacer(1, 15))
+        
+        # Protein Info
+        if request.protein_info:
+            story.append(Paragraph("TARGET PROTEIN", styles['ReportSection']))
+            p = request.protein_info
+            protein_data = [
+                ['Name', sanitize_text(p.get('name', 'N/A'))],
+                ['UniProt ID', sanitize_text(p.get('id', 'N/A'))],
+                ['Organism', sanitize_text(p.get('organism', 'N/A'))],
+                ['Sequence Length', f"{p.get('sequence_length', 'N/A')} amino acids"]
+            ]
+            protein_table = Table(protein_data, colWidths=[1.5*inch, 4.5*inch])
+            protein_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#666666')),
+                ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#1a1a1a')),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ]))
+            story.append(protein_table)
+            
+            if p.get('function'):
+                story.append(Spacer(1, 5))
+                func_text = sanitize_text(p.get('function', '')[:400])
+                story.append(Paragraph(f"<b>Function:</b> {func_text}", styles['ReportSmall']))
+            story.append(Spacer(1, 10))
+        
+        # Drug Candidates with Images
+        if request.top_candidates and len(request.top_candidates) > 0:
+            story.append(Paragraph("IDENTIFIED DRUG CANDIDATES", styles['ReportSection']))
+            
+            # Create grid of compounds with images
+            compound_rows = []
+            row = []
+            for i, drug in enumerate(request.top_candidates[:6], 1):
+                # Create compound card
+                card_content = []
+                
+                # Add molecule image if available
+                if drug.get('image_base64'):
+                    try:
+                        img_data = base64.b64decode(drug['image_base64'])
+                        img_buffer = BytesIO(img_data)
+                        img = RLImage(img_buffer, width=1.2*inch, height=1.2*inch)
+                        card_content.append(img)
+                    except:
+                        pass
+                
+                name = sanitize_text(drug.get('name', 'N/A'))[:20]
+                score = f"{drug.get('score', 0)*100:.0f}%"
+                mw = str(drug.get('molecular_weight', 'N/A'))
+                
+                card_content.append(Paragraph(f"<b>{name}</b>", styles['ReportSmall']))
+                card_content.append(Paragraph(f"Score: {score} | MW: {mw}", styles['ReportSmall']))
+                
+                row.append(card_content)
+                
+                if len(row) == 3:
+                    compound_rows.append(row)
+                    row = []
+            
+            if row:
+                while len(row) < 3:
+                    row.append([])
+                compound_rows.append(row)
+            
+            if compound_rows:
+                compound_table = Table(compound_rows, colWidths=[2*inch, 2*inch, 2*inch])
+                compound_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                    ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ]))
+                story.append(compound_table)
+            story.append(Spacer(1, 10))
+        
+        # Novel Compounds
+        if request.novel_drugs and len(request.novel_drugs) > 0:
+            story.append(Paragraph("GENERATED NOVEL COMPOUNDS", styles['ReportSection']))
+            
+            novel_rows = []
+            row = []
+            for i, drug in enumerate(request.novel_drugs[:6], 1):
+                card_content = []
+                
+                if drug.get('image_base64'):
+                    try:
+                        img_data = base64.b64decode(drug['image_base64'])
+                        img_buffer = BytesIO(img_data)
+                        img = RLImage(img_buffer, width=1.2*inch, height=1.2*inch)
+                        card_content.append(img)
+                    except:
+                        pass
+                
+                name = sanitize_text(drug.get('name', f'Novel-{i}'))[:20]
+                score = f"{drug.get('score', 0)*100:.0f}%"
+                
+                card_content.append(Paragraph(f"<b>{name}</b>", styles['ReportSmall']))
+                card_content.append(Paragraph(f"Fitness: {score}", styles['ReportSmall']))
+                
+                row.append(card_content)
+                
+                if len(row) == 3:
+                    novel_rows.append(row)
+                    row = []
+            
+            if row:
+                while len(row) < 3:
+                    row.append([])
+                novel_rows.append(row)
+            
+            if novel_rows:
+                novel_table = Table(novel_rows, colWidths=[2*inch, 2*inch, 2*inch])
+                novel_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                    ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ]))
+                story.append(novel_table)
+            story.append(Spacer(1, 10))
+        
+        # Research Analysis
+        story.append(Paragraph("RESEARCH ANALYSIS", styles['ReportSection']))
+        
+        insights_text = sanitize_text(request.insights or "Analysis in progress...")
+        
+        # Clean markdown and format for PDF
+        # Remove markdown headers
+        insights_text = re.sub(r'^#{1,3}\s*', '', insights_text, flags=re.MULTILINE)
+        
+        # Handle bold text - simpler approach
+        insights_text = insights_text.replace('**', '')
+        
+        # Split into paragraphs
+        paragraphs = insights_text.split('\n\n')
+        for para in paragraphs:
+            para = para.strip()
+            if not para:
+                continue
+            
+            # Handle bullet points
+            lines = para.split('\n')
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if line.startswith('- ') or line.startswith('* '):
+                    line = '  ' + line[2:]
+                    story.append(Paragraph(line, styles['ReportBody']))
+                elif line[0].isdigit() and '. ' in line[:4]:
+                    story.append(Paragraph('  ' + line, styles['ReportBody']))
+                else:
+                    story.append(Paragraph(line, styles['ReportBody']))
+            
+            story.append(Spacer(1, 4))
+        
+        # References
+        if request.papers and len(request.papers) > 0:
+            story.append(PageBreak())
+            story.append(Paragraph("REFERENCES", styles['ReportSection']))
+            
+            for i, paper in enumerate(request.papers[:15], 1):
+                authors = paper.get('authors', ['Unknown'])
+                author = sanitize_text(authors[0] if authors else 'Unknown')
+                title = sanitize_text(paper.get('title', 'N/A'))[:100]
+                source = sanitize_text(paper.get('source', 'N/A'))
+                published = sanitize_text(paper.get('published', 'N/A'))
+                
+                ref_text = f"[{i}] {author} et al. {title}. {source}, {published}"
+                story.append(Paragraph(ref_text, styles['ReportSmall']))
+                story.append(Spacer(1, 3))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        logger.info("PDF export complete")
+        
+        return StreamingResponse(
+            buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=drug_discovery_report.pdf"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"PDF export error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
+@app.post("/export-docx")
+def export_report_docx(request: ExportReportRequest):
+    """
+    Generate a professional DOCX research report with molecule images
+    """
+    logger.info(f"=== DOCX EXPORT === Query: {request.query}")
+    
+    try:
+        from docx import Document
+        from docx.shared import Inches, Pt, RGBColor, Cm
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.enum.table import WD_TABLE_ALIGNMENT
+        
+        doc = Document()
+        
+        # Set document margins
+        sections = doc.sections
+        for section in sections:
+            section.top_margin = Inches(0.8)
+            section.bottom_margin = Inches(0.8)
+            section.left_margin = Inches(0.8)
+            section.right_margin = Inches(0.8)
+        
+        # Title
+        title = doc.add_heading('Drug Discovery Research Report', 0)
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # Subtitle
+        subtitle = doc.add_paragraph()
+        run = subtitle.add_run(sanitize_text(request.query))
+        run.bold = True
+        run.font.size = Pt(14)
+        subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # Date
+        date_para = doc.add_paragraph()
+        date_run = date_para.add_run(f"Generated: {pd.Timestamp.now().strftime('%B %d, %Y')} | OccolusAI Platform")
+        date_run.font.size = Pt(9)
+        date_run.font.color.rgb = RGBColor(128, 128, 128)
+        date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        doc.add_paragraph()
+        
+        # Target Protein
+        if request.protein_info:
+            doc.add_heading('Target Protein', level=1)
+            p = request.protein_info
+            
+            table = doc.add_table(rows=4, cols=2)
+            table.style = 'Table Grid'
+            
+            cells = [
+                ('Name', sanitize_text(p.get('name', 'N/A'))),
+                ('UniProt ID', sanitize_text(p.get('id', 'N/A'))),
+                ('Organism', sanitize_text(p.get('organism', 'N/A'))),
+                ('Sequence Length', f"{p.get('sequence_length', 'N/A')} amino acids")
+            ]
+            
+            for i, (label, value) in enumerate(cells):
+                table.rows[i].cells[0].text = label
+                table.rows[i].cells[1].text = str(value)
+                table.rows[i].cells[0].paragraphs[0].runs[0].bold = True
+            
+            if p.get('function'):
+                func_para = doc.add_paragraph()
+                func_run = func_para.add_run("Function: ")
+                func_run.bold = True
+                func_para.add_run(sanitize_text(p.get('function', '')[:400]))
+            
+            doc.add_paragraph()
+        
+        # Drug Candidates with Images
+        if request.top_candidates and len(request.top_candidates) > 0:
+            doc.add_heading('Identified Drug Candidates', level=1)
+            
+            # Create table with images
+            num_cols = 3
+            compounds = request.top_candidates[:6]
+            num_rows = (len(compounds) + num_cols - 1) // num_cols
+            
+            table = doc.add_table(rows=num_rows * 2, cols=num_cols)
+            table.alignment = WD_TABLE_ALIGNMENT.CENTER
+            
+            for idx, drug in enumerate(compounds):
+                row_idx = (idx // num_cols) * 2
+                col_idx = idx % num_cols
+                
+                # Add image
+                img_cell = table.rows[row_idx].cells[col_idx]
+                if drug.get('image_base64'):
+                    try:
+                        img_data = base64.b64decode(drug['image_base64'])
+                        img_buffer = BytesIO(img_data)
+                        img_para = img_cell.paragraphs[0]
+                        img_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        run = img_para.add_run()
+                        run.add_picture(img_buffer, width=Cm(3))
+                    except Exception as e:
+                        img_cell.text = "[Image]"
+                
+                # Add text below image
+                text_cell = table.rows[row_idx + 1].cells[col_idx]
+                text_para = text_cell.paragraphs[0]
+                text_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                name_run = text_para.add_run(sanitize_text(drug.get('name', 'N/A'))[:20] + '\n')
+                name_run.bold = True
+                name_run.font.size = Pt(9)
+                
+                score = f"{drug.get('score', 0)*100:.0f}%"
+                mw = drug.get('molecular_weight', 'N/A')
+                info_run = text_para.add_run(f"Score: {score} | MW: {mw}")
+                info_run.font.size = Pt(8)
+                info_run.font.color.rgb = RGBColor(100, 100, 100)
+            
+            doc.add_paragraph()
+        
+        # Novel Compounds
+        if request.novel_drugs and len(request.novel_drugs) > 0:
+            doc.add_heading('Generated Novel Compounds', level=1)
+            
+            num_cols = 3
+            compounds = request.novel_drugs[:6]
+            num_rows = (len(compounds) + num_cols - 1) // num_cols
+            
+            table = doc.add_table(rows=num_rows * 2, cols=num_cols)
+            table.alignment = WD_TABLE_ALIGNMENT.CENTER
+            
+            for idx, drug in enumerate(compounds):
+                row_idx = (idx // num_cols) * 2
+                col_idx = idx % num_cols
+                
+                img_cell = table.rows[row_idx].cells[col_idx]
+                if drug.get('image_base64'):
+                    try:
+                        img_data = base64.b64decode(drug['image_base64'])
+                        img_buffer = BytesIO(img_data)
+                        img_para = img_cell.paragraphs[0]
+                        img_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        run = img_para.add_run()
+                        run.add_picture(img_buffer, width=Cm(3))
+                    except:
+                        img_cell.text = "[Image]"
+                
+                text_cell = table.rows[row_idx + 1].cells[col_idx]
+                text_para = text_cell.paragraphs[0]
+                text_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                name_run = text_para.add_run(sanitize_text(drug.get('name', f'Novel-{idx+1}'))[:20] + '\n')
+                name_run.bold = True
+                name_run.font.size = Pt(9)
+                
+                score = f"{drug.get('score', 0)*100:.0f}%"
+                info_run = text_para.add_run(f"Fitness: {score}")
+                info_run.font.size = Pt(8)
+                info_run.font.color.rgb = RGBColor(100, 100, 100)
+            
+            doc.add_paragraph()
+        
+        # Research Analysis
+        doc.add_heading('Research Analysis', level=1)
+        
+        insights_text = sanitize_text(request.insights or "Analysis in progress...")
+        
+        for line in insights_text.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Headers
+            if line.startswith('###') or line.startswith('##'):
+                heading = doc.add_heading(line.replace('#', '').strip(), level=2)
+            # Bullet points
+            elif line.startswith('-') or line.startswith('*'):
+                content = line.lstrip('-* ').strip()
+                para = doc.add_paragraph(style='List Bullet')
+                para.add_run(content.replace('**', ''))
+            # Numbered
+            elif line and line[0].isdigit() and '.' in line[:3]:
+                content = line.split('.', 1)[1].strip() if '.' in line else line
+                para = doc.add_paragraph(style='List Number')
+                para.add_run(content.replace('**', ''))
+            else:
+                para = doc.add_paragraph()
+                para.add_run(line.replace('**', ''))
+        
+        # References
+        if request.papers and len(request.papers) > 0:
+            doc.add_page_break()
+            doc.add_heading('References', level=1)
+            
+            for i, paper in enumerate(request.papers[:15], 1):
+                para = doc.add_paragraph()
+                ref = para.add_run(f"[{i}] ")
+                ref.bold = True
+                
+                authors = paper.get('authors', ['Unknown'])
+                author = sanitize_text(authors[0] if authors else 'Unknown')
+                title = sanitize_text(paper.get('title', 'N/A'))[:100]
+                source = sanitize_text(paper.get('source', 'N/A'))
+                published = sanitize_text(paper.get('published', 'N/A'))
+                
+                para.add_run(f"{author} et al. ")
+                title_run = para.add_run(f'"{title}" ')
+                title_run.italic = True
+                para.add_run(f'{source}, {published}')
+        
+        # Save
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        
+        logger.info("DOCX export complete")
+        
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f"attachment; filename=drug_discovery_report.docx"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"DOCX export error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="localhost", port=8000, reload=True)
