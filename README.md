@@ -1,5 +1,7 @@
 # Occolus
 
+https://github.com/user-attachments/assets/94c24d10-4861-4e9f-89f5-0c76922208df
+
 An open-source drug discovery platform that leverages machine learning and AI to accelerate the identification of therapeutic compounds. Occolus bridges the gap between protein targets and potential drug candidates by providing researchers with intelligent screening, molecular analysis, and automated research synthesis.
 
 ---
