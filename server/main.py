@@ -1415,7 +1415,7 @@ def export_report_pdf(request: ExportReportRequest):
         story.append(Paragraph("Drug Discovery Research Report", styles['ReportTitle']))
         story.append(Paragraph(sanitize_text(request.query), styles['ReportSubtitle']))
         story.append(Paragraph(
-            f"Generated: {pd.Timestamp.now().strftime('%B %d, %Y')} | OccolusAI Platform",
+            f"Generated: {pd.Timestamp.now().strftime('%B %d, %Y')} | Occolus",
             styles['ReportDate']
         ))
         story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#e0e0e0')))
@@ -1653,7 +1653,7 @@ def export_report_docx(request: ExportReportRequest):
         
         # Date
         date_para = doc.add_paragraph()
-        date_run = date_para.add_run(f"Generated: {pd.Timestamp.now().strftime('%B %d, %Y')} | OccolusAI Platform")
+        date_run = date_para.add_run(f"Generated: {pd.Timestamp.now().strftime('%B %d, %Y')} | Occolus")
         date_run.font.size = Pt(9)
         date_run.font.color.rgb = RGBColor(128, 128, 128)
         date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
