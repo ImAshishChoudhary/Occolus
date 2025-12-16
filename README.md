@@ -1,528 +1,400 @@
-# 🧬 OccolusAI - Intelligent Protein-Based Drug Discovery Platform
+# Occolus
 
-<div align="center">
-
-![OccolusAI Logo](https://img.shields.io/badge/OccolusAI-Drug%20Discovery-blue?style=for-the-badge&logo=molecule)
-![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python)
-![Next.js](https://img.shields.io/badge/Next.js-13+-black?style=for-the-badge&logo=next.js)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.6+-red?style=for-the-badge&logo=pytorch)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green?style=for-the-badge&logo=fastapi)
-
-**Revolutionizing drug discovery through AI-powered protein-drug interaction prediction**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
-
-</div>
+An open-source drug discovery platform that leverages machine learning and AI to accelerate the identification of therapeutic compounds. Occolus bridges the gap between protein targets and potential drug candidates by providing researchers with intelligent screening, molecular analysis, and automated research synthesis.
 
 ---
 
-https://github.com/user-attachments/assets/c78b4d9b-431d-4d73-ab06-1168aa29101e
+## The Problem
+
+Drug discovery remains one of the most expensive and time-consuming endeavors in science. Traditional approaches require years of manual screening, with success rates below 10%. Researchers face challenges in:
+
+- Identifying promising drug candidates from vast chemical libraries
+- Predicting how compounds will interact with target proteins
+- Assessing drug-likeness and safety profiles early in development
+- Synthesizing insights from thousands of research papers
+- Visualizing and communicating molecular structures effectively
+
+Occolus addresses these challenges by combining computational chemistry with modern AI to provide a unified discovery workflow.
 
 ---
 
-## 📋 Table of Contents
+## What Occolus Does
 
-- [🎯 Problem Statement](#-problem-statement)
-- [💡 Solution Overview](#-solution-overview)
-- [🚀 Key Features](#-key-features)
-- [🏗️ Architecture](#️-architecture)
-- [🛠️ Tech Stack](#️-tech-stack)
-- [📦 Installation & Setup](#-installation--setup)
-- [🎮 Usage Guide](#-usage-guide)
-- [🔬 Technical Details](#-technical-details)
-- [📊 Model Performance](#-model-performance)
-- [🔧 API Documentation](#-api-documentation)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+### Intelligent Target Discovery
 
+Search for any protein using UniProt IDs, gene names, or disease associations. Occolus retrieves comprehensive protein data including amino acid sequences, functional annotations, organism information, and known binding sites. The platform automatically identifies relevant drug targets and maps them to existing therapeutic compounds.
 
----
+### Compound Screening and Ranking
 
-## 🎯 Problem Statement
+Screen FDA-approved drugs and experimental compounds against your target protein. The machine learning model predicts binding affinity using molecular fingerprints and protein sequence encoding, ranking candidates by their likelihood of therapeutic interaction. Each prediction includes confidence scores and molecular property analysis.
 
-Traditional drug discovery is a **costly, time-consuming, and high-risk** process:
+### ADMET Property Prediction
 
-- **💰 Cost**: $2.6 billion average cost to bring a drug to market
-- **⏰ Time**: 10-15 years from discovery to approval
-- **🎯 Success Rate**: Only 1 in 10,000 compounds reach clinical trials
-- **🔬 Manual Process**: Heavy reliance on trial-and-error approaches
-- **📊 Data Overload**: Difficulty in analyzing vast molecular datasets
+Evaluate drug-likeness before investing in expensive lab work. Occolus calculates:
 
-**Key Challenges:**
-- Predicting drug-protein interactions accurately
-- Identifying drug repurposing opportunities
-- Analyzing molecular properties efficiently
-- Visualizing complex molecular structures
-- Generating actionable insights from data
+- **Absorption** — Lipophilicity (LogP), topological polar surface area
+- **Distribution** — Molecular weight, hydrogen bond donors and acceptors
+- **Metabolism** — Rotatable bonds, aromatic ring count
+- **Excretion** — Molecular complexity indicators
+- **Toxicity** — Lipinski's Rule of Five compliance, structural alerts
 
----
+### Molecular Visualization
 
-## 💡 Solution Overview
+View compounds in both 2D structural diagrams and interactive 3D representations. Explore bond angles, functional groups, and spatial configurations. Compare structural similarities between lead compounds and their analogs.
 
-**OccolusAI** is an **intelligent drug discovery platform** that leverages **machine learning** and **artificial intelligence** to predict drug-protein interactions and accelerate the drug discovery process.
+### Analog Generation
 
-### 🎯 Core Capabilities
+Generate structural analogs of promising compounds. The platform applies chemical transformations to explore nearby chemical space, identifying derivatives that may offer improved binding or reduced toxicity.
 
-1. **🤖 AI-Powered Prediction**: Deep learning models predict drug-protein binding probabilities
-2. **🔍 Intelligent Search**: Dual-mode discovery (protein-based & drug-based)
-3. **📊 Molecular Analysis**: Comprehensive drug property analysis
-4. **🎨 Visual Insights**: Interactive molecular structure visualization
-5. **🧠 AI Insights**: Automated analysis and recommendations
+### AI-Powered Research Reports
+
+Synthesize findings into comprehensive research reports. Occolus queries scientific literature, extracts relevant insights, and generates structured analyses covering:
+
+- Target protein biology and therapeutic relevance
+- Mechanism of action for identified compounds
+- Existing clinical evidence and trial data
+- Potential drug repurposing opportunities
+- Recommended next steps for lead optimization
+
+Export reports as professionally formatted PDF or Word documents with proper citations.
 
 ---
 
-## 🚀 Key Features
+## Features
 
-### 🔬 **Dual Discovery Modes**
-
-#### **Protein-Based Discovery**
-- Search by protein name or UniProt ID
-- Screen FDA-approved drugs against target proteins
-- Rank candidates by binding probability
-- Generate AI-powered insights
-
-#### **Drug-Based Analysis**
-- Analyze specific drug-protein interactions
-- Predict binding affinity and properties
-- Visualize molecular structures
-- Identify similar compounds
-
-### 🧬 **Molecular Analysis**
-
-- **📏 Molecular Properties**: Weight, LogP, H-bond donors/acceptors
-- **🎨 Structure Visualization**: 2D molecular structure rendering
-- **🔥 Interaction Heatmaps**: Feature importance visualization
-- **📈 Binding Scores**: Probability-based interaction predictions
-
-### 🤖 **AI-Powered Insights**
-
-- **💡 Drug-likeness Assessment**: AI evaluation of compound properties
-- **🔄 Repurposing Opportunities**: Identification of new therapeutic uses
-- **📚 Literature Analysis**: Context from scientific literature
-- **🎯 Recommendations**: Next steps for lead optimization
-
-### 🎨 **Modern User Interface**
-
-- **📱 Responsive Design**: Mobile-friendly interface
-- **⚡ Real-time Search**: Instant protein/drug lookup
-- **🖥️ Split-Screen Layout**: Research agent panel
-- **🎭 Beautiful Animations**: Smooth user experience
+| Feature | Description |
+|---------|-------------|
+| Protein Search | Query by UniProt ID, gene name, or disease keyword |
+| Drug Screening | Rank compounds by predicted binding affinity |
+| ADMET Analysis | Evaluate drug-likeness and safety indicators |
+| 2D/3D Visualization | Interactive molecular structure viewing |
+| Analog Generation | Explore structural derivatives of lead compounds |
+| Literature Synthesis | AI-generated insights from research papers |
+| Report Export | Download findings as PDF or DOCX |
+| Compound Database | 150+ FDA-approved drugs with full molecular data |
 
 ---
 
-## 🏗️ Architecture
+## Screenshots
+
+The landing page provides a clean search interface for protein and disease queries:
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   External      │
-│   (Next.js)     │◄──►│   (FastAPI)     │◄──►│   APIs          │
-│                 │    │                 │    │                 │
-│ • React UI      │    │ • ML Models     │    │ • UniProt       │
-│ • TypeScript    │    │ • RDKit         │    │ • PubChem       │
-│ • Tailwind CSS  │    │ • PyTorch       │    │ • Gemini AI     │
-│ • Framer Motion │    │ • FastAPI       │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+[Landing Page - Search proteins, diseases, drug targets]
 ```
 
-### **Data Flow**
+Research results display identified compounds ranked by binding score alongside AI-generated insights:
 
-1. **User Input** → Protein/Drug search query
-2. **API Integration** → Fetch molecular data from UniProt/PubChem
-3. **ML Processing** → Drug-target interaction prediction
-4. **AI Analysis** → Generate insights using Gemini AI
-5. **Visualization** → Render molecular structures and heatmaps
-6. **Results Display** → Present comprehensive analysis
+```
+[Research View - Left sidebar with stats, center with report, right with references]
+```
 
----
+Compound details show molecular structure, properties, and ADMET predictions:
 
-## 🛠️ Tech Stack
-
-### **Backend (Python)**
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **FastAPI** | 0.115+ | High-performance web framework |
-| **PyTorch** | 2.6+ | Deep learning framework |
-| **RDKit** | 2024.9+ | Chemical informatics |
-| **Google Gemini** | 1.9+ | AI-powered insights |
-| **NumPy** | 2.2+ | Numerical computing |
-| **Pandas** | 2.2+ | Data manipulation |
-| **Matplotlib** | 3.10+ | Visualization |
-| **Seaborn** | 0.13+ | Statistical visualization |
-
-### **Frontend (TypeScript/React)**
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js** | 13+ | React framework |
-| **TypeScript** | 5.2+ | Type safety |
-| **Tailwind CSS** | 3.3+ | Styling |
-| **Framer Motion** | 11+ | Animations |
-| **Radix UI** | Latest | Component library |
-| **React Hook Form** | 7.5+ | Form handling |
-| **React Markdown** | 10+ | Markdown rendering |
-
-### **External APIs**
-- **UniProt**: Protein sequence and annotation data
-- **PubChem**: Chemical compound information
-- **Google Gemini**: AI-powered analysis and insights
+```
+[Drug Detail Modal - 2D/3D structure toggle, properties table, analog list]
+```
 
 ---
 
-## 📦 Installation & Setup
+## Technology Stack
 
-### **Prerequisites**
+### Backend
 
-- **Python 3.11+**
-- **Node.js 18+**
-- **Git**
-- **Google Gemini API Key** (for AI insights)
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| API Framework | FastAPI | High-performance async REST API |
+| ML Framework | PyTorch | Neural network inference |
+| Cheminformatics | RDKit | Molecular fingerprints, property calculation, structure generation |
+| AI Analysis | Google Gemini | Research synthesis and insight generation |
+| Data Processing | Pandas, NumPy | Molecular data manipulation |
 
-### **1. Clone the Repository**
+### Frontend
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Framework | Next.js 13+ | React with App Router |
+| Language | TypeScript | Type-safe development |
+| Styling | Tailwind CSS | Utility-first CSS |
+| Animation | Framer Motion | Smooth UI transitions |
+| 3D Rendering | 3Dmol.js | Molecular visualization |
+
+### External APIs
+
+| Service | Purpose |
+|---------|---------|
+| UniProt | Protein sequences and annotations |
+| PubChem | Chemical compound data |
+| Europe PMC | Scientific literature |
+| AlphaFold DB | Protein 3D structures |
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- Git
+- Google Gemini API key (free tier available)
+
+### Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/occolus-ai.git
-cd occolus-ai
+git clone https://github.com/your-username/occolus.git
+cd occolus
 ```
 
-### **2. Backend Setup**
+### Backend Setup
 
 ```bash
-# Navigate to server directory
 cd server
 
 # Create virtual environment
 python -m venv venv
 
-# Activate virtual environment
-# Windows
+# Activate environment
+# Windows:
 venv\Scripts\activate
-# macOS/Linux
+# macOS/Linux:
 source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
 ```
 
-### **3. Frontend Setup**
+Create `.env` file:
+
+```
+GEMINI_API_KEY=your_api_key_here
+```
+
+### Frontend Setup
 
 ```bash
-# Navigate to client directory
-cd ../client
-
-# Install dependencies
+cd client
 npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local and add your API URL
 ```
 
-### **4. Environment Variables**
+### Run Application
 
-#### **Backend (.env)**
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-#### **Frontend (.env.local)**
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### **5. Run the Application**
-
+Terminal 1 (Backend):
 ```bash
-# Terminal 1: Start Backend
 cd server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --port 8000
+```
 
-# Terminal 2: Start Frontend
+Terminal 2 (Frontend):
+```bash
 cd client
 npm run dev
 ```
 
-### **6. Access the Application**
+Access the application at http://localhost:3000
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
+API documentation available at http://localhost:8000/docs
 
 ---
 
-## 🎮 Usage Guide
+## Project Structure
 
-### **Getting Started**
-
-1. **Open the Application**: Navigate to http://localhost:3000
-2. **Choose Mode**: Select between "Protein-based" or "Drug-based" discovery
-3. **Enter Query**: 
-   - **Protein Mode**: Enter protein name or UniProt ID (e.g., "P53", "P04637")
-   - **Drug Mode**: Enter drug name (e.g., "Aspirin", "Ibuprofen")
-4. **Analyze Results**: Review predictions, visualizations, and AI insights
-
-### **Protein-Based Discovery**
-
-1. **Search for Protein**: Enter protein name or UniProt ID
-2. **View Protein Info**: See sequence, description, and properties
-3. **Discover Drugs**: Click "Discover Candidates" to screen FDA-approved drugs
-4. **Analyze Results**: Review binding scores, molecular structures, and insights
-
-### **Drug-Based Analysis**
-
-1. **Search for Drug**: Enter drug name
-2. **Select Protein**: Choose target protein for analysis
-3. **View Analysis**: See binding probability, molecular properties, and visualizations
-4. **Explore Similar Drugs**: Find structurally similar compounds
-
-### **Understanding Results**
-
-#### **Binding Probability**
-- **0.0-0.3**: Low binding affinity
-- **0.3-0.7**: Moderate binding affinity
-- **0.7-1.0**: High binding affinity
-
-#### **Molecular Properties**
-- **Molecular Weight**: Should be < 500 Da for good bioavailability
-- **LogP**: Should be between 1-3 for optimal membrane permeability
-- **H-bond Donors**: Should be ≤ 5
-- **H-bond Acceptors**: Should be ≤ 10
+```
+occolus/
+├── client/                     # Frontend application
+│   ├── app/
+│   │   ├── page.tsx           # Main application page
+│   │   ├── layout.tsx         # Root layout
+│   │   └── globals.css        # Global styles
+│   ├── components/
+│   │   └── Molecule3DViewer.tsx
+│   └── public/                # Static assets
+│
+├── server/                     # Backend application
+│   ├── main.py                # API endpoints
+│   ├── drug_discovery.py      # Core discovery logic
+│   ├── drug_db.csv            # Compound database
+│   ├── drug_target_model.pth  # Trained ML model
+│   └── requirements.txt       # Python dependencies
+│
+└── README.md
+```
 
 ---
 
-## 🔬 Technical Details
+## API Reference
 
-### **Machine Learning Model**
+### Core Endpoints
 
-#### **Architecture**
-```python
-class DrugTargetModel(nn.Module):
-    def __init__(self, protein_dim, drug_dim):
-        super(DrugTargetModel, self).__init__()
-        self.fc1 = nn.Linear(protein_dim + drug_dim, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 1)
-```
-
-#### **Input Features**
-- **Protein Encoding**: 400-dimensional vector (20 amino acids × 20 max length)
-- **Drug Fingerprinting**: 1024-bit Morgan fingerprints using RDKit
-- **Model Size**: 748KB trained model
-
-#### **Training Data**
-- **Drug Database**: 30 FDA-approved drugs with SMILES notation
-- **Protein Targets**: Various protein sequences from UniProt
-- **Model Type**: Binary classification (binding probability 0-1)
-
-### **Data Processing Pipeline**
-
-1. **Protein Sequence Fetching**: UniProt API integration
-2. **Drug Information Retrieval**: PubChem API integration
-3. **Molecular Fingerprinting**: RDKit Morgan fingerprints
-4. **Feature Engineering**: Protein encoding and drug representation
-5. **Model Prediction**: PyTorch inference
-6. **Visualization**: Matplotlib/Seaborn heatmaps
-7. **AI Analysis**: Gemini AI insights generation
-
-### **API Endpoints**
-
-#### **Health Check**
+**Unified Discovery**
 ```http
-GET /health
-```
+POST /unified-discovery
+Content-Type: application/json
 
-#### **Drug-Target Prediction**
-```http
-POST /predict
 {
-  "uniprot_id": "P04637",
-  "drug_name": "Aspirin"
+  "query": "EGFR inhibitors"
 }
 ```
 
-#### **Drug Discovery**
+Returns protein information, ranked drug candidates, research insights, and relevant papers.
+
+**ADMET Prediction**
 ```http
-POST /discover
+POST /admet
+Content-Type: application/json
+
 {
-  "uniprot_id": "P04637",
-  "top_n": 5
+  "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"
 }
 ```
 
----
+Returns drug-likeness assessment and property calculations.
 
-## 📊 Model Performance
+**Generate Analogs**
+```http
+POST /generate-analogs
+Content-Type: application/json
 
-### **Current Capabilities**
-- **Prediction Accuracy**: Binary classification for drug-protein binding
-- **Processing Speed**: Real-time predictions (< 1 second)
-- **Database Coverage**: 30 FDA-approved drugs
-- **Protein Support**: Any UniProt-accessible protein
-
-### **Model Metrics**
-- **Input Dimensions**: Protein (400) + Drug (1024) = 1424 features
-- **Hidden Layers**: 128 → 64 → 1 neurons
-- **Activation**: ReLU + Sigmoid
-- **Loss Function**: Binary Cross-Entropy
-
-### **Limitations & Future Improvements**
-- **Dataset Size**: Expand beyond 30 drugs
-- **Model Architecture**: Implement Graph Neural Networks
-- **Validation**: Add cross-validation and uncertainty quantification
-- **3D Structure**: Integrate molecular docking
-
----
-
-## 🔧 API Documentation
-
-### **Authentication**
-Currently, the API doesn't require authentication for development. For production, implement API keys or OAuth.
-
-### **Rate Limiting**
-- **Requests per minute**: 100
-- **Burst requests**: 10
-
-### **Error Handling**
-```json
 {
-  "error": "Invalid UniProt ID or sequence not found",
-  "status_code": 400
-}
-```
-
-### **Response Format**
-```json
-{
-  "uniprot_id": "P04637",
-  "drug_name": "Aspirin",
   "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O",
-  "molecular_weight": 180.16,
-  "logP": 1.43,
-  "h_bond_donors": 1,
-  "h_bond_acceptors": 4,
-  "binding_probability": 0.75,
-  "molecule_image": "data:image/png;base64,...",
-  "heatmap_image": "data:image/png;base64,...",
-  "insights": "AI-generated analysis..."
+  "num_analogs": 5
 }
 ```
 
----
+Returns structurally similar compounds.
 
-## 🤝 Contributing
+**3D Coordinates**
+```http
+POST /molecule-3d-coords
+Content-Type: application/json
 
-We welcome contributions! Please follow these steps:
-
-### **1. Fork the Repository**
-```bash
-git clone https://github.com/yourusername/occolus-ai.git
-cd occolus-ai
+{
+  "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"
+}
 ```
 
-### **2. Create a Feature Branch**
-```bash
-git checkout -b feature/amazing-feature
+Returns MOL block for 3D visualization.
+
+**Export Reports**
+```http
+POST /export-pdf
+POST /export-docx
 ```
 
-### **3. Make Changes**
-- Follow the existing code style
-- Add tests for new features
-- Update documentation
-
-### **4. Commit Changes**
-```bash
-git commit -m "Add amazing feature"
-```
-
-### **5. Push to Branch**
-```bash
-git push origin feature/amazing-feature
-```
-
-### **6. Open Pull Request**
-Create a pull request with a detailed description of your changes.
-
-### **Development Guidelines**
-- **Code Style**: Follow PEP 8 (Python) and ESLint (TypeScript)
-- **Testing**: Add unit tests for new features
-- **Documentation**: Update README and API docs
-- **Commits**: Use conventional commit messages
+Returns downloadable document with full research report.
 
 ---
 
-## 🐛 Troubleshooting
+## Machine Learning Model
 
-### **Common Issues**
+The binding affinity prediction model uses a feedforward neural network architecture:
 
-#### **Backend Issues**
-```bash
-# Module not found errors
-pip install -r requirements.txt
+**Input Features**
+- Protein sequence encoding (400 dimensions)
+- Morgan molecular fingerprints (1024 bits)
 
-# RDKit installation issues (Windows)
-conda install -c conda-forge rdkit
-
-# Port already in use
-lsof -ti:8000 | xargs kill -9
+**Architecture**
+```
+Input (1424) → Dense (128) → ReLU → Dense (64) → ReLU → Dense (1) → Sigmoid
 ```
 
-#### **Frontend Issues**
-```bash
-# Node modules issues
-rm -rf node_modules package-lock.json
-npm install
+**Output**
+- Binding probability score (0-1)
 
-# Build errors
-npm run build
-```
-
-#### **API Issues**
-- **CORS Errors**: Check backend CORS configuration
-- **Timeout Errors**: Increase request timeout
-- **Memory Issues**: Monitor system resources
-
-### **Performance Optimization**
-- **Model Caching**: Implement model result caching
-- **Database Indexing**: Optimize database queries
-- **CDN**: Use CDN for static assets
-- **Compression**: Enable gzip compression
+The model was trained on known drug-protein interactions and provides relative rankings for compound screening. Predictions should be validated experimentally.
 
 ---
 
-## 📄 License
+## Contributing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+We welcome contributions from the community. Here's how to get involved:
+
+### Getting Started
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes
+4. Test thoroughly
+5. Commit with clear messages: `git commit -m "Add feature description"`
+6. Push to your fork: `git push origin feature/your-feature`
+7. Open a pull request
+
+### Contribution Areas
+
+**Expand Compound Database**
+- Add more FDA-approved drugs
+- Include experimental compounds from ChEMBL
+- Integrate natural product libraries
+
+**Improve ML Models**
+- Implement graph neural networks for molecular representation
+- Add uncertainty quantification to predictions
+- Train on larger drug-target interaction datasets
+
+**Enhance Visualization**
+- Add protein-ligand docking visualization
+- Implement pharmacophore mapping
+- Build comparison views for multiple compounds
+
+**Extend Analysis**
+- Add synthesis route prediction
+- Implement toxicity prediction models
+- Build drug-drug interaction checking
+
+### Code Standards
+
+- Python: Follow PEP 8, use type hints
+- TypeScript: Follow ESLint configuration
+- Commits: Use conventional commit format
+- Documentation: Update README for new features
 
 ---
 
-## 🙏 Acknowledgments
+## Roadmap
 
-- **UniProt Consortium** for protein data
-- **PubChem** for chemical compound information
-- **Google Gemini** for AI-powered insights
-- **RDKit** for chemical informatics
-- **PyTorch** for deep learning capabilities
-- **Next.js** for the React framework
+**Current Version**
+- Protein target search and discovery
+- FDA-approved drug screening
+- ADMET property prediction
+- 2D/3D molecular visualization
+- AI research report generation
+- PDF/DOCX export
+
+**Planned Features**
+- Molecular docking simulation
+- De novo drug generation
+- Multi-target screening
+- Collaborative workspaces
+- API access for programmatic use
 
 ---
 
-## 📞 Support
+## License
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/occolus-ai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/occolus-ai/discussions)
-- **Email**: support@occolus-ai.com
+This project is released under the MIT License. See the LICENSE file for details.
+
+You are free to use, modify, and distribute this software for any purpose, including commercial applications.
 
 ---
 
-<div align="center">
+## Acknowledgments
 
-**Made with ❤️ by the OccolusAI Team**
+Occolus is built on the work of many open-source projects and public databases:
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/occolus-ai?style=social)](https://github.com/yourusername/occolus-ai)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/occolus-ai?style=social)](https://github.com/yourusername/occolus-ai)
-[![GitHub issues](https://img.shields.io/github/issues/yourusername/occolus-ai)](https://github.com/yourusername/occolus-ai/issues)
+- RDKit for cheminformatics
+- PyTorch for machine learning
+- UniProt Consortium for protein data
+- PubChem for chemical information
+- Europe PMC for literature access
 
-</div>
+---
+
+## Support
+
+- **Issues**: Report bugs or request features via GitHub Issues
+- **Discussions**: Join conversations in GitHub Discussions
+- **Documentation**: API docs at `/docs` when server is running
+
+---
+
+Built for researchers, by researchers. Contributions welcome.
