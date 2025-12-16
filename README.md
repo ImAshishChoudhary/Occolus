@@ -30,17 +30,11 @@ Screen FDA-approved drugs and experimental compounds against your target protein
 
 ### ADMET Property Prediction
 
-Evaluate drug-likeness before investing in expensive lab work. Occolus calculates:
-
-- **Absorption** — Lipophilicity (LogP), topological polar surface area
-- **Distribution** — Molecular weight, hydrogen bond donors and acceptors
-- **Metabolism** — Rotatable bonds, aromatic ring count
-- **Excretion** — Molecular complexity indicators
-- **Toxicity** — Lipinski's Rule of Five compliance, structural alerts
+Evaluate drug-likeness before investing in expensive lab work. Occolus calculates absorption, distribution, metabolism, excretion, and toxicity indicators including Lipinski's Rule of Five compliance.
 
 ### Molecular Visualization
 
-View compounds in both 2D structural diagrams and interactive 3D representations. Explore bond angles, functional groups, and spatial configurations. Compare structural similarities between lead compounds and their analogs.
+View compounds in both 2D structural diagrams and interactive 3D representations. Explore bond angles, functional groups, and spatial configurations.
 
 ### Analog Generation
 
@@ -48,152 +42,60 @@ Generate structural analogs of promising compounds. The platform applies chemica
 
 ### AI-Powered Research Reports
 
-Synthesize findings into comprehensive research reports. Occolus queries scientific literature, extracts relevant insights, and generates structured analyses covering:
-
-- Target protein biology and therapeutic relevance
-- Mechanism of action for identified compounds
-- Existing clinical evidence and trial data
-- Potential drug repurposing opportunities
-- Recommended next steps for lead optimization
-
-Export reports as professionally formatted PDF or Word documents with proper citations.
+Synthesize findings into comprehensive research reports. Occolus queries scientific literature, extracts relevant insights, and generates structured analyses with proper citations. Export as PDF or Word documents.
 
 ---
 
-## Features
+## Architecture
 
-| Feature | Description |
-|---------|-------------|
-| Protein Search | Query by UniProt ID, gene name, or disease keyword |
-| Drug Screening | Rank compounds by predicted binding affinity |
-| ADMET Analysis | Evaluate drug-likeness and safety indicators |
-| 2D/3D Visualization | Interactive molecular structure viewing |
-| Analog Generation | Explore structural derivatives of lead compounds |
-| Literature Synthesis | AI-generated insights from research papers |
-| Report Export | Download findings as PDF or DOCX |
-| Compound Database | 150+ FDA-approved drugs with full molecular data |
+```
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│     Frontend     │────▶│     Backend      │────▶│   External APIs  │
+│    (Next.js)     │◀────│    (FastAPI)     │◀────│                  │
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+                                │
+                    ┌───────────┴───────────┐
+                    ▼                       ▼
+            ┌──────────────┐        ┌──────────────┐
+            │   PyTorch    │        │    RDKit     │
+            │   ML Model   │        │  Chemistry   │
+            └──────────────┘        └──────────────┘
+```
+
+**Data Flow:**
+1. User submits protein/disease query
+2. Backend fetches protein data from UniProt
+3. ML model predicts binding affinity for compounds
+4. RDKit calculates molecular properties and generates structures
+5. Gemini AI synthesizes research insights
+6. Results rendered with 2D/3D visualization
 
 ---
 
-## Screenshots
+## ML Model
 
-The landing page provides a clean search interface for protein and disease queries:
+The binding prediction model uses a feedforward neural network:
 
-```
-[Landing Page - Search proteins, diseases, drug targets]
-```
-
-Research results display identified compounds ranked by binding score alongside AI-generated insights:
-
-```
-[Research View - Left sidebar with stats, center with report, right with references]
-```
-
-Compound details show molecular structure, properties, and ADMET predictions:
-
-```
-[Drug Detail Modal - 2D/3D structure toggle, properties table, analog list]
+```python
+class DrugTargetModel(nn.Module):
+    def __init__(self, protein_dim=400, drug_dim=1024):
+        super().__init__()
+        self.fc1 = nn.Linear(protein_dim + drug_dim, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 1)
+    
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return torch.sigmoid(self.fc3(x))
 ```
 
----
+**Input Features:**
+- Protein sequence encoding: 400 dimensions (20 amino acids × 20 positions)
+- Morgan fingerprints: 1024-bit molecular representation via RDKit
 
-## Technology Stack
-
-### Backend
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| API Framework | FastAPI | High-performance async REST API |
-| ML Framework | PyTorch | Neural network inference |
-| Cheminformatics | RDKit | Molecular fingerprints, property calculation, structure generation |
-| AI Analysis | Google Gemini | Research synthesis and insight generation |
-| Data Processing | Pandas, NumPy | Molecular data manipulation |
-
-### Frontend
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | Next.js 13+ | React with App Router |
-| Language | TypeScript | Type-safe development |
-| Styling | Tailwind CSS | Utility-first CSS |
-| Animation | Framer Motion | Smooth UI transitions |
-| 3D Rendering | 3Dmol.js | Molecular visualization |
-
-### External APIs
-
-| Service | Purpose |
-|---------|---------|
-| UniProt | Protein sequences and annotations |
-| PubChem | Chemical compound data |
-| Europe PMC | Scientific literature |
-| AlphaFold DB | Protein 3D structures |
-
----
-
-## Installation
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+
-- Git
-- Google Gemini API key (free tier available)
-
-### Clone Repository
-
-```bash
-git clone https://github.com/your-username/occolus.git
-cd occolus
-```
-
-### Backend Setup
-
-```bash
-cd server
-
-# Create virtual environment
-python -m venv venv
-
-# Activate environment
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-Create `.env` file:
-
-```
-GEMINI_API_KEY=your_api_key_here
-```
-
-### Frontend Setup
-
-```bash
-cd client
-npm install
-```
-
-### Run Application
-
-Terminal 1 (Backend):
-```bash
-cd server
-uvicorn main:app --reload --port 8000
-```
-
-Terminal 2 (Frontend):
-```bash
-cd client
-npm run dev
-```
-
-Access the application at http://localhost:3000
-
-API documentation available at http://localhost:8000/docs
+**Output:**
+- Binding probability score (0-1)
 
 ---
 
@@ -201,200 +103,190 @@ API documentation available at http://localhost:8000/docs
 
 ```
 occolus/
-├── client/                     # Frontend application
+├── client/
 │   ├── app/
-│   │   ├── page.tsx           # Main application page
-│   │   ├── layout.tsx         # Root layout
-│   │   └── globals.css        # Global styles
-│   ├── components/
-│   │   └── Molecule3DViewer.tsx
-│   └── public/                # Static assets
+│   │   ├── page.tsx              # Main UI component
+│   │   ├── layout.tsx            # Root layout
+│   │   └── globals.css
+│   └── components/
+│       └── Molecule3DViewer.tsx  # 3Dmol.js wrapper
 │
-├── server/                     # Backend application
-│   ├── main.py                # API endpoints
-│   ├── drug_discovery.py      # Core discovery logic
-│   ├── drug_db.csv            # Compound database
-│   ├── drug_target_model.pth  # Trained ML model
-│   └── requirements.txt       # Python dependencies
+├── server/
+│   ├── main.py                   # FastAPI endpoints
+│   ├── drug_discovery.py         # ADMET, analogs, docking logic
+│   ├── drug_db.csv               # 150+ FDA-approved compounds
+│   ├── drug_target_model.pth     # Trained PyTorch model
+│   └── requirements.txt
 │
 └── README.md
 ```
 
 ---
 
-## API Reference
+## Installation
 
-### Core Endpoints
+**Prerequisites:** Python 3.11+, Node.js 18+, Google Gemini API key
 
-**Unified Discovery**
-```http
-POST /unified-discovery
-Content-Type: application/json
+```bash
+# Clone
+git clone https://github.com/your-username/occolus.git
+cd occolus
 
-{
-  "query": "EGFR inhibitors"
-}
+# Backend
+cd server
+python -m venv venv
+venv\Scripts\activate          # Windows
+source venv/bin/activate       # macOS/Linux
+pip install -r requirements.txt
+
+# Create .env
+echo "GEMINI_API_KEY=your_key_here" > .env
+
+# Frontend
+cd ../client
+npm install
 ```
 
-Returns protein information, ranked drug candidates, research insights, and relevant papers.
+**Run:**
 
-**ADMET Prediction**
-```http
-POST /admet
-Content-Type: application/json
+```bash
+# Terminal 1 - Backend
+cd server
+uvicorn main:app --reload --port 8000
 
-{
-  "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"
-}
+# Terminal 2 - Frontend
+cd client
+npm run dev
 ```
 
-Returns drug-likeness assessment and property calculations.
-
-**Generate Analogs**
-```http
-POST /generate-analogs
-Content-Type: application/json
-
-{
-  "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O",
-  "num_analogs": 5
-}
-```
-
-Returns structurally similar compounds.
-
-**3D Coordinates**
-```http
-POST /molecule-3d-coords
-Content-Type: application/json
-
-{
-  "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"
-}
-```
-
-Returns MOL block for 3D visualization.
-
-**Export Reports**
-```http
-POST /export-pdf
-POST /export-docx
-```
-
-Returns downloadable document with full research report.
+Open http://localhost:3000
 
 ---
 
-## Machine Learning Model
+## API Endpoints
 
-The binding affinity prediction model uses a feedforward neural network architecture:
+### Unified Discovery
 
-**Input Features**
-- Protein sequence encoding (400 dimensions)
-- Morgan molecular fingerprints (1024 bits)
-
-**Architecture**
-```
-Input (1424) → Dense (128) → ReLU → Dense (64) → ReLU → Dense (1) → Sigmoid
+```bash
+curl -X POST http://localhost:8000/unified-discovery \
+  -H "Content-Type: application/json" \
+  -d '{"query": "EGFR inhibitors"}'
 ```
 
-**Output**
-- Binding probability score (0-1)
+Response includes `protein_info`, `top_candidates`, `insights`, and `papers`.
 
-The model was trained on known drug-protein interactions and provides relative rankings for compound screening. Predictions should be validated experimentally.
+### ADMET Analysis
+
+```bash
+curl -X POST http://localhost:8000/admet \
+  -H "Content-Type: application/json" \
+  -d '{"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"}'
+```
+
+Returns molecular weight, LogP, HBD/HBA, TPSA, and Lipinski compliance.
+
+### Generate Analogs
+
+```bash
+curl -X POST http://localhost:8000/generate-analogs \
+  -H "Content-Type: application/json" \
+  -d '{"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O", "num_analogs": 5}'
+```
+
+Returns SMILES and properties for structural derivatives.
+
+### 3D Coordinates
+
+```bash
+curl -X POST http://localhost:8000/molecule-3d-coords \
+  -H "Content-Type: application/json" \
+  -d '{"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"}'
+```
+
+Returns MOL block for 3Dmol.js rendering.
+
+### Export Reports
+
+```bash
+curl -X POST http://localhost:8000/export-pdf \
+  -H "Content-Type: application/json" \
+  -d '{"query": "...", "insights": "...", "top_candidates": [...]}' \
+  --output report.pdf
+```
 
 ---
 
-## Contributing
+## Core Dependencies
 
-We welcome contributions from the community. Here's how to get involved:
+**Backend:**
+```
+fastapi==0.115.0
+torch==2.6.0
+rdkit==2024.9.5
+google-generativeai==1.9.0
+pandas==2.2.3
+reportlab==4.0.8
+python-docx==1.1.0
+```
 
-### Getting Started
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Make your changes
-4. Test thoroughly
-5. Commit with clear messages: `git commit -m "Add feature description"`
-6. Push to your fork: `git push origin feature/your-feature`
-7. Open a pull request
-
-### Contribution Areas
-
-**Expand Compound Database**
-- Add more FDA-approved drugs
-- Include experimental compounds from ChEMBL
-- Integrate natural product libraries
-
-**Improve ML Models**
-- Implement graph neural networks for molecular representation
-- Add uncertainty quantification to predictions
-- Train on larger drug-target interaction datasets
-
-**Enhance Visualization**
-- Add protein-ligand docking visualization
-- Implement pharmacophore mapping
-- Build comparison views for multiple compounds
-
-**Extend Analysis**
-- Add synthesis route prediction
-- Implement toxicity prediction models
-- Build drug-drug interaction checking
-
-### Code Standards
-
-- Python: Follow PEP 8, use type hints
-- TypeScript: Follow ESLint configuration
-- Commits: Use conventional commit format
-- Documentation: Update README for new features
+**Frontend:**
+```
+next@14.0.0
+react@18.2.0
+typescript@5.2.0
+tailwindcss@3.3.0
+framer-motion@11.0.0
+3dmol@2.0.0
+```
 
 ---
 
 ## Roadmap
 
-**Current Version**
-- Protein target search and discovery
-- FDA-approved drug screening
-- ADMET property prediction
+**Current**
+- Protein target search via UniProt
+- Drug screening with ML binding prediction
+- ADMET property calculation
 - 2D/3D molecular visualization
-- AI research report generation
-- PDF/DOCX export
+- AI research synthesis with Gemini
+- PDF/DOCX report export
 
-**Planned Features**
+**Planned**
 - Molecular docking simulation
 - De novo drug generation
 - Multi-target screening
-- Collaborative workspaces
-- API access for programmatic use
+- Batch processing API
+
+---
+
+## Contributing
+
+```bash
+# Fork and clone
+git clone https://github.com/your-username/occolus.git
+
+# Create branch
+git checkout -b feature/your-feature
+
+# Make changes, then commit
+git commit -m "Add feature"
+
+# Push and open PR
+git push origin feature/your-feature
+```
+
+Areas for contribution:
+- Expand compound database (ChEMBL integration)
+- Improve ML model (graph neural networks)
+- Add molecular docking (AutoDock Vina)
+- Enhance 3D visualization
 
 ---
 
 ## License
 
-This project is released under the MIT License. See the LICENSE file for details.
-
-You are free to use, modify, and distribute this software for any purpose, including commercial applications.
+MIT License. Free for personal and commercial use.
 
 ---
 
-## Acknowledgments
-
-Occolus is built on the work of many open-source projects and public databases:
-
-- RDKit for cheminformatics
-- PyTorch for machine learning
-- UniProt Consortium for protein data
-- PubChem for chemical information
-- Europe PMC for literature access
-
----
-
-## Support
-
-- **Issues**: Report bugs or request features via GitHub Issues
-- **Discussions**: Join conversations in GitHub Discussions
-- **Documentation**: API docs at `/docs` when server is running
-
----
-
-Built for researchers, by researchers. Contributions welcome.
+Built for researchers. Contributions welcome.
