@@ -283,10 +283,4 @@ Areas for contribution:
 
 ---
 
-## License
-
-MIT License. Free for personal and commercial use.
-
----
-
 Built for researchers. Contributions welcome.
