@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Loader2, ExternalLink, ArrowRight, X, Beaker, BookOpen, Lightbulb, Info, Share2, FileText, File, Box } from "lucide-react";
+import { Send, Loader2, ExternalLink, ArrowRight, X, Beaker, BookOpen, Lightbulb, Info, Share2, FileText, File, Box, Search, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 
@@ -390,51 +390,117 @@ export default function Home() {
     return insights.slice(0, 5);
   };
 
-  // Landing Page - Clean Minimalist
+  // Landing Page - Minimalist Drug Discovery
   if (view === 'landing') {
       return (
-      <main className="h-screen bg-[#f5f0e8] flex flex-col items-center justify-center px-6">
-        <div className="max-w-md w-full">
-          {/* Logo */}
-          <h1 className="text-3xl font-light text-[#1a1a1a] text-center mb-2">
-            Occolus<span className="font-semibold">AI</span>
-          </h1>
-          <p className="text-[#999] text-xs text-center mb-10">Drug Discovery Platform</p>
+      <main className="min-h-screen bg-[#f5f0e8] relative overflow-hidden">
+        {/* Geometric Background - Subtle Pentagon/Hexagon Lines */}
+        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="lineGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#c8c0b4" stopOpacity="0.15" />
+              <stop offset="50%" stopColor="#b8b0a4" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="#c8c0b4" stopOpacity="0.15" />
+            </linearGradient>
+            <linearGradient id="lineGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#d4ccc0" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#c0b8ac" stopOpacity="0.06" />
+            </linearGradient>
+          </defs>
+          
+          {/* Large Pentagon - Top Right */}
+          <polygon 
+            points="85%,5% 98%,35% 92%,65% 78%,65% 72%,35%" 
+            fill="none" 
+            stroke="url(#lineGrad1)" 
+            strokeWidth="1"
+          />
+          
+          {/* Medium Pentagon - Bottom Left */}
+          <polygon 
+            points="8%,55% 22%,48% 28%,65% 18%,80% 5%,72%" 
+            fill="none" 
+            stroke="url(#lineGrad2)" 
+            strokeWidth="1"
+          />
+          
+          {/* Small Pentagon - Top Left */}
+          <polygon 
+            points="15%,8% 25%,5% 30%,15% 22%,22% 12%,18%" 
+            fill="none" 
+            stroke="url(#lineGrad1)" 
+            strokeWidth="0.8"
+          />
+          
+          {/* Connecting Lines */}
+          <line x1="30%" y1="15%" x2="72%" y2="35%" stroke="url(#lineGrad2)" strokeWidth="0.5" />
+          <line x1="28%" y1="65%" x2="78%" y2="65%" stroke="url(#lineGrad1)" strokeWidth="0.5" />
+          <line x1="22%" y1="22%" x2="8%" y2="55%" stroke="url(#lineGrad2)" strokeWidth="0.5" />
+          
+          {/* Accent dots at vertices */}
+          <circle cx="85%" cy="5%" r="2" fill="#c8c0b4" fillOpacity="0.2" />
+          <circle cx="98%" cy="35%" r="2" fill="#c8c0b4" fillOpacity="0.15" />
+          <circle cx="8%" cy="55%" r="2" fill="#c8c0b4" fillOpacity="0.2" />
+          <circle cx="22%" cy="48%" r="1.5" fill="#c8c0b4" fillOpacity="0.15" />
+          <circle cx="15%" cy="8%" r="1.5" fill="#c8c0b4" fillOpacity="0.18" />
+        </svg>
 
-          {/* Search */}
-          <form onSubmit={handleSubmit} className="mb-6">
-            <div className="flex items-center bg-white rounded-full px-4 py-3 border border-[#e5e0d5] focus-within:border-[#1a1a1a] transition">
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Search proteins, diseases, targets..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm text-[#1a1a1a] placeholder-[#bbb]"
-              />
-              <button 
-                type="submit" 
-                disabled={!query.trim()} 
-                className="ml-2 bg-[#1a1a1a] text-white rounded-full p-2 hover:bg-[#333] disabled:opacity-20 transition"
-              >
-                <ArrowRight className="h-4 w-4" />
-              </button>
-                  </div>
-          </form>
-
-          {/* Examples */}
-          <div className="flex gap-2 justify-center flex-wrap">
-            {['P02533 keratin', 'EGFR inhibitors', 'Alzheimer drugs'].map((ex) => (
-              <button 
-                key={ex} 
-                onClick={() => setQuery(ex)} 
-                className="px-3 py-1.5 text-xs text-[#888] hover:text-[#1a1a1a] transition"
-              >
-                {ex}
-              </button>
-            ))}
-          </div>
+        {/* Main Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="w-full max-w-md"
+          >
+            {/* Logo */}
+            <div className="text-center mb-10">
+              <h1 className="text-3xl font-light text-[#1a1a1a] mb-2 tracking-tight">
+                Occolus
+              </h1>
+              <p className="text-[#999] text-xs tracking-wide">Drug Discovery & Research</p>
             </div>
+
+            {/* Search Box - Compact with integrated button */}
+            <form onSubmit={handleSubmit} className="mb-6">
+              <div className="flex items-center bg-white rounded-lg border border-[#ddd8ce] hover:border-[#ccc5b8] focus-within:border-[#1a1a1a] transition-colors">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search proteins, targets, diseases..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="flex-1 bg-transparent px-4 py-2.5 outline-none text-sm text-[#1a1a1a] placeholder-[#aaa]"
+                />
+                <button 
+                  type="submit" 
+                  disabled={!query.trim()} 
+                  className="h-full px-4 py-2.5 bg-[#1a1a1a] text-white text-xs font-medium rounded-r-lg hover:bg-[#333] disabled:opacity-30 transition-colors"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+
+            {/* Example Queries */}
+            <div className="flex gap-3 justify-center flex-wrap mb-12">
+              {['P02533 keratin', 'EGFR inhibitors', 'Alzheimer targets'].map((ex) => (
+                <button 
+                  key={ex} 
+                  onClick={() => setQuery(ex)} 
+                  className="text-[11px] text-[#999] hover:text-[#666] transition-colors"
+                >
+                  {ex}
+                </button>
+              ))}
+            </div>
+
+            {/* Tagline */}
+            <p className="text-center text-[11px] text-[#aaa] leading-relaxed max-w-xs mx-auto">
+              Accelerate drug discovery with AI-powered protein analysis, compound screening, and research synthesis.
+            </p>
+          </motion.div>
+        </div>
       </main>
     );
   }
