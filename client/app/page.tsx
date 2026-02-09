@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Loader2, ExternalLink, ArrowRight, X, Beaker, BookOpen, Lightbulb, Info, Share2, FileText, File, Box, Search, Activity } from "lucide-react";
+import { Send, Loader2, ExternalLink, ArrowRight, X, Beaker, BookOpen, Lightbulb, Info, Share2, FileText, File, Box, Search, Activity, Scale, Plus, Check, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 
@@ -83,6 +83,10 @@ export default function Home() {
   const [show3D, setShow3D] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
+  const [compareList, setCompareList] = useState<Candidate[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareData, setCompareData] = useState<any>(null);
+  const [comparing, setComparing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Toggle novel drug selection for report
