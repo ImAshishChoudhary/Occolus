@@ -1298,23 +1298,67 @@ export default function Home() {
                   {/* Compound Summary */}
                   {result.top_candidates && result.top_candidates.length > 0 && (
                     <section className="mb-8">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-1 h-5 bg-[#1a1a1a] rounded-full"></div>
-                        <h2 className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Identified Compounds</h2>
-                                </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-5 bg-[#1a1a1a] rounded-full"></div>
+                          <h2 className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Identified Compounds</h2>
+                        </div>
+                        {compareList.length >= 2 && (
+                          <button
+                            onClick={runComparison}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a1a1a] text-white text-[10px] font-medium rounded-lg hover:bg-[#333] transition"
+                          >
+                            <Scale className="w-3 h-3" />
+                            Compare ({compareList.length})
+                          </button>
+                        )}
+                      </div>
                       <div className="grid grid-cols-4 gap-3">
                         {result.top_candidates.slice(0, 8).map((drug, i) => (
-                          <div key={i} className="text-center cursor-pointer group" onClick={() => setSelectedDrug(drug)}>
-                            <div className="bg-white/40 rounded-lg p-2 mb-2 group-hover:bg-white/60 transition">
+                          <div key={i} className="relative text-center group">
+                            {/* Compare Toggle Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCompare(drug);
+                              }}
+                              className={`absolute top-1 right-1 z-10 w-5 h-5 rounded-full flex items-center justify-center transition ${
+                                isInCompareList(drug.smiles)
+                                  ? 'bg-[#1a1a1a] text-white'
+                                  : 'bg-white/80 text-[#888] hover:bg-white hover:text-[#1a1a1a] opacity-0 group-hover:opacity-100'
+                              }`}
+                              title={isInCompareList(drug.smiles) ? 'Remove from comparison' : 'Add to comparison'}
+                            >
+                              {isInCompareList(drug.smiles) ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                            </button>
+                            
+                            <div 
+                              className={`bg-white/40 rounded-lg p-2 mb-2 cursor-pointer transition ${
+                                isInCompareList(drug.smiles) ? 'ring-2 ring-[#1a1a1a]' : 'group-hover:bg-white/60'
+                              }`}
+                              onClick={() => setSelectedDrug(drug)}
+                            >
                               {drug.image_base64 && (
                                 <img src={`data:image/png;base64,${drug.image_base64}`} alt={drug.name} className="w-full h-16 object-contain" />
                               )}
-                                </div>
+                            </div>
                             <p className="text-[10px] font-medium text-[#1a1a1a] truncate">{drug.name}</p>
                             <p className="text-[9px] text-[#888]">{(drug.score * 100).toFixed(0)}%</p>
-                              </div>
+                          </div>
                         ))}
-                            </div>
+                      </div>
+                      
+                      {/* Compare Hint */}
+                      {compareList.length === 0 && (
+                        <p className="text-[10px] text-[#aaa] text-center mt-3">
+                          💡 Hover over compounds and click <Plus className="w-3 h-3 inline" /> to add them for comparison
+                        </p>
+                      )}
+                      {compareList.length === 1 && (
+                        <p className="text-[10px] text-[#aaa] text-center mt-3">
+                          Add at least one more compound to compare
+                        </p>
+                      )}
                     </section>
                   )}
 
