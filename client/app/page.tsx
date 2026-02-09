@@ -717,6 +717,265 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+      {/* Drug Comparison Modal */}
+      <AnimatePresence>
+        {showCompareModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#f5f0e8]/95 overflow-y-auto"
+            onClick={() => setShowCompareModal(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-5xl w-full my-8 max-h-[90vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <button onClick={() => setShowCompareModal(false)} className="absolute top-6 right-6 p-2 text-[#666] hover:text-[#1a1a1a] bg-white/50 rounded-full">
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <Scale className="w-5 h-5 text-[#1a1a1a]" />
+                  <h2 className="text-xl font-bold text-[#1a1a1a]">Drug Comparison</h2>
+                </div>
+                <p className="text-xs text-[#888]">Side-by-side analysis of selected compounds</p>
+              </div>
+
+              {comparing ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#1a1a1a] mb-4" />
+                  <p className="text-sm text-[#1a1a1a]">Analyzing compounds...</p>
+                  <p className="text-xs text-[#888] mt-1">Calculating ADMET & drug-likeness</p>
+                </div>
+              ) : compareData ? (
+                <div className="space-y-6">
+                  {/* Summary Cards */}
+                  {compareData.summary && (
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 text-center border border-green-200">
+                        <p className="text-[10px] text-green-700 uppercase tracking-wide mb-1">Best Drug-likeness</p>
+                        <p className="text-sm font-bold text-green-800">{compareData.summary.best_drug_likeness}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 text-center border border-blue-200">
+                        <p className="text-[10px] text-blue-700 uppercase tracking-wide mb-1">Best Absorption</p>
+                        <p className="text-sm font-bold text-blue-800">{compareData.summary.best_absorption}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 text-center border border-purple-200">
+                        <p className="text-[10px] text-purple-700 uppercase tracking-wide mb-1">Safest Profile</p>
+                        <p className="text-sm font-bold text-purple-800">{compareData.summary.safest_profile}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 text-center border border-amber-200">
+                        <p className="text-[10px] text-amber-700 uppercase tracking-wide mb-1">Lipinski Pass</p>
+                        <p className="text-sm font-bold text-amber-800">{compareData.summary.lipinski_compliant}/{compareData.summary.total_compared}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Radar Chart Visualization */}
+                  {compareData.radar_data && (
+                    <div className="bg-white/60 rounded-xl p-5 border border-[#e5e0d5]">
+                      <h3 className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide mb-4">Property Comparison</h3>
+                      <div className="flex justify-center">
+                        <svg viewBox="0 0 400 350" className="w-full max-w-md">
+                          {/* Radar background */}
+                          {[100, 75, 50, 25].map((level, i) => (
+                            <polygon
+                              key={i}
+                              points={compareData.radar_data.labels.map((_: string, idx: number) => {
+                                const angle = (Math.PI * 2 * idx) / compareData.radar_data.labels.length - Math.PI / 2;
+                                const r = level * 1.2;
+                                return `${200 + r * Math.cos(angle)},${150 + r * Math.sin(angle)}`;
+                              }).join(' ')}
+                              fill="none"
+                              stroke="#e5e0d5"
+                              strokeWidth="1"
+                            />
+                          ))}
+                          
+                          {/* Axis lines */}
+                          {compareData.radar_data.labels.map((_: string, idx: number) => {
+                            const angle = (Math.PI * 2 * idx) / compareData.radar_data.labels.length - Math.PI / 2;
+                            return (
+                              <line
+                                key={idx}
+                                x1="200"
+                                y1="150"
+                                x2={200 + 120 * Math.cos(angle)}
+                                y2={150 + 120 * Math.sin(angle)}
+                                stroke="#e5e0d5"
+                                strokeWidth="1"
+                              />
+                            );
+                          })}
+                          
+                          {/* Labels */}
+                          {compareData.radar_data.labels.map((label: string, idx: number) => {
+                            const angle = (Math.PI * 2 * idx) / compareData.radar_data.labels.length - Math.PI / 2;
+                            const x = 200 + 140 * Math.cos(angle);
+                            const y = 150 + 140 * Math.sin(angle);
+                            return (
+                              <text
+                                key={idx}
+                                x={x}
+                                y={y}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="text-[10px] fill-[#666]"
+                              >
+                                {label}
+                              </text>
+                            );
+                          })}
+                          
+                          {/* Data polygons */}
+                          {compareData.radar_data.compounds.map((compound: any, compIdx: number) => {
+                            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+                            const color = colors[compIdx % colors.length];
+                            return (
+                              <g key={compIdx}>
+                                <polygon
+                                  points={compound.values.map((val: number, idx: number) => {
+                                    const angle = (Math.PI * 2 * idx) / compound.values.length - Math.PI / 2;
+                                    const r = (val / 100) * 120;
+                                    return `${200 + r * Math.cos(angle)},${150 + r * Math.sin(angle)}`;
+                                  }).join(' ')}
+                                  fill={color}
+                                  fillOpacity="0.15"
+                                  stroke={color}
+                                  strokeWidth="2"
+                                />
+                                {compound.values.map((val: number, idx: number) => {
+                                  const angle = (Math.PI * 2 * idx) / compound.values.length - Math.PI / 2;
+                                  const r = (val / 100) * 120;
+                                  return (
+                                    <circle
+                                      key={idx}
+                                      cx={200 + r * Math.cos(angle)}
+                                      cy={150 + r * Math.sin(angle)}
+                                      r="4"
+                                      fill={color}
+                                    />
+                                  );
+                                })}
+                              </g>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                      
+                      {/* Legend */}
+                      <div className="flex justify-center gap-4 mt-4">
+                        {compareData.radar_data.compounds.map((compound: any, idx: number) => {
+                          const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+                          return (
+                            <div key={idx} className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors[idx % colors.length] }}></div>
+                              <span className="text-xs text-[#666]">{compound.name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Detailed Comparison Table */}
+                  {compareData.compounds && (
+                    <div className="bg-white/60 rounded-xl p-5 border border-[#e5e0d5]">
+                      <h3 className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide mb-4">Detailed Properties</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b border-[#e5e0d5]">
+                              <th className="text-left py-2 pr-4 text-[#888] font-medium">Property</th>
+                              {compareData.compounds.map((c: any, i: number) => (
+                                <th key={i} className="text-center py-2 px-3 text-[#1a1a1a] font-medium">{c.name}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              { key: 'molecular_weight', label: 'Mol. Weight (Da)', ideal: '< 500' },
+                              { key: 'logP', label: 'LogP', ideal: '0-5' },
+                              { key: 'tpsa', label: 'TPSA (Å²)', ideal: '< 140' },
+                              { key: 'h_bond_donors', label: 'H-Bond Donors', ideal: '≤ 5' },
+                              { key: 'h_bond_acceptors', label: 'H-Bond Acceptors', ideal: '≤ 10' },
+                              { key: 'rotatable_bonds', label: 'Rotatable Bonds', ideal: '≤ 10' },
+                              { key: 'drug_likeness_score', label: 'Drug-likeness', ideal: '> 0.7' },
+                            ].map(({ key, label, ideal }) => (
+                              <tr key={key} className="border-b border-[#f0ebe0]">
+                                <td className="py-2 pr-4 text-[#666]">
+                                  {label}
+                                  <span className="text-[9px] text-[#aaa] ml-1">({ideal})</span>
+                                </td>
+                                {compareData.compounds.map((c: any, i: number) => {
+                                  const val = c.properties[key];
+                                  const isGood = key === 'drug_likeness_score' ? val > 0.7 :
+                                                 key === 'molecular_weight' ? val < 500 :
+                                                 key === 'logP' ? val >= 0 && val <= 5 :
+                                                 key === 'tpsa' ? val < 140 :
+                                                 key === 'h_bond_donors' ? val <= 5 :
+                                                 key === 'h_bond_acceptors' ? val <= 10 :
+                                                 key === 'rotatable_bonds' ? val <= 10 : true;
+                                  return (
+                                    <td key={i} className={`text-center py-2 px-3 font-medium ${isGood ? 'text-green-600' : 'text-orange-600'}`}>
+                                      {typeof val === 'number' ? (key === 'drug_likeness_score' ? (val * 100).toFixed(0) + '%' : val.toFixed(1)) : val}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                            <tr className="border-b border-[#f0ebe0]">
+                              <td className="py-2 pr-4 text-[#666]">Lipinski Pass</td>
+                              {compareData.compounds.map((c: any, i: number) => (
+                                <td key={i} className={`text-center py-2 px-3 font-medium ${c.properties.lipinski_pass ? 'text-green-600' : 'text-red-600'}`}>
+                                  {c.properties.lipinski_pass ? '✓ Pass' : '✗ Fail'}
+                                </td>
+                              ))}
+                            </tr>
+                            <tr>
+                              <td className="py-2 pr-4 text-[#666]">BBB Penetration</td>
+                              {compareData.compounds.map((c: any, i: number) => (
+                                <td key={i} className={`text-center py-2 px-3 font-medium ${c.admet.bbb_penetration?.class === 'Yes' ? 'text-green-600' : 'text-orange-600'}`}>
+                                  {c.admet.bbb_penetration?.class || 'N/A'}
+                                </td>
+                              ))}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Compound Images */}
+                  <div className="grid grid-cols-5 gap-3">
+                    {compareData.compounds?.map((c: any, i: number) => (
+                      <div key={i} className="bg-white/60 rounded-lg p-3 text-center border border-[#e5e0d5]">
+                        {c.image_base64 && (
+                          <img src={`data:image/png;base64,${c.image_base64}`} alt={c.name} className="w-full h-20 object-contain mb-2" />
+                        )}
+                        <p className="text-[10px] font-medium text-[#1a1a1a] truncate">{c.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Scale className="h-10 w-10 text-[#ccc] mb-4" />
+                  <p className="text-sm text-[#888] mb-2">Select compounds to compare</p>
+                  <p className="text-xs text-[#aaa]">Add 2-5 compounds from your results</p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Drug Design Modal */}
       <AnimatePresence>
         {showDesignModal && (
