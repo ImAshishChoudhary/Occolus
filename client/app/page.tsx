@@ -1489,6 +1489,71 @@ export default function Home() {
         </aside>
       </div>
 
+      {/* Floating Comparison Bar */}
+      <AnimatePresence>
+        {compareList.length > 0 && !showCompareModal && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40"
+          >
+            <div className="flex items-center gap-3 bg-[#1a1a1a] text-white px-4 py-3 rounded-xl shadow-lg">
+              <div className="flex items-center gap-2">
+                <Scale className="w-4 h-4 text-[#888]" />
+                <span className="text-xs font-medium">Compare:</span>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                {compareList.map((drug, i) => (
+                  <div key={i} className="relative group">
+                    {drug.image_base64 ? (
+                      <img 
+                        src={`data:image/png;base64,${drug.image_base64}`} 
+                        alt={drug.name} 
+                        className="w-8 h-8 rounded bg-white object-contain"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center text-[10px]">
+                        {drug.name.charAt(0)}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => toggleCompare(drug)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {compareList.length < 5 && (
+                  <div className="w-8 h-8 rounded border border-dashed border-white/30 flex items-center justify-center text-white/50 text-xs">
+                    +
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 ml-2">
+                <button
+                  onClick={() => setCompareList([])}
+                  className="p-1.5 text-[#888] hover:text-white transition"
+                  title="Clear all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={runComparison}
+                  disabled={compareList.length < 2}
+                  className="px-3 py-1.5 bg-white text-[#1a1a1a] text-xs font-medium rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  Compare
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
