@@ -1296,6 +1296,167 @@ def get_protein_3d_coords(request: Protein3DRequest):
     return structure
 
 
+# ==================== DRUG COMPARISON ENDPOINT ====================
+
+class CompareRequest(BaseModel):
+    smiles_list: List[str]
+    names: Optional[List[str]] = None
+
+
+@app.post("/compare-drugs")
+def compare_drugs(request: CompareRequest):
+    """
+    Compare multiple drug candidates side-by-side
+    Returns normalized properties for radar chart visualization
+    """
+    logger.info(f"=== DRUG COMPARISON === Comparing {len(request.smiles_list)} compounds")
+    
+    from drug_discovery import calculate_admet_properties, calculate_drug_likeness_score
+    
+    results = []
+    all_properties = {
+        "molecular_weight": [],
+        "logP": [],
+        "tpsa": [],
+        "h_bond_donors": [],
+        "h_bond_acceptors": [],
+        "rotatable_bonds": [],
+        "drug_likeness_score": [],
+    }
+    
+    for i, smiles in enumerate(request.smiles_list):
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                continue
+            
+            # Calculate ADMET properties
+            admet = calculate_admet_properties(smiles)
+            if "error" in admet:
+                continue
+            
+            # Generate image
+            img = Draw.MolToImage(mol, size=(200, 200))
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            
+            # Get name
+            name = request.names[i] if request.names and i < len(request.names) else f"Compound {i+1}"
+            
+            compound_data = {
+                "name": name,
+                "smiles": smiles,
+                "image_base64": img_base64,
+                "properties": {
+                    "molecular_weight": admet.get("molecular_weight", 0),
+                    "logP": admet.get("logP", 0),
+                    "tpsa": admet.get("tpsa", 0),
+                    "h_bond_donors": admet.get("h_bond_donors", 0),
+                    "h_bond_acceptors": admet.get("h_bond_acceptors", 0),
+                    "rotatable_bonds": admet.get("rotatable_bonds", 0),
+                    "drug_likeness_score": admet.get("drug_likeness_score", 0),
+                    "lipinski_pass": admet.get("lipinski_pass", False),
+                    "veber_pass": admet.get("veber_pass", False),
+                },
+                "admet": {
+                    "oral_absorption": admet.get("oral_absorption", {}),
+                    "bbb_penetration": admet.get("bbb_penetration", {}),
+                    "hepatotoxicity_risk": admet.get("hepatotoxicity_risk", {}),
+                    "cardiotoxicity_risk": admet.get("cardiotoxicity_risk", {}),
+                }
+            }
+            
+            results.append(compound_data)
+            
+            # Collect for normalization
+            for key in all_properties:
+                all_properties[key].append(admet.get(key, 0))
+                
+        except Exception as e:
+            logger.warning(f"Error processing compound {i}: {e}")
+            continue
+    
+    # Calculate normalized scores (0-100) for radar chart
+    def normalize(values, ideal_min, ideal_max, inverse=False):
+        """Normalize values to 0-100 scale based on ideal drug-like ranges"""
+        normalized = []
+        for v in values:
+            if ideal_max == ideal_min:
+                score = 100
+            else:
+                # Score based on how close to ideal range
+                if v < ideal_min:
+                    score = max(0, 100 - ((ideal_min - v) / ideal_min) * 100) if ideal_min > 0 else 100
+                elif v > ideal_max:
+                    score = max(0, 100 - ((v - ideal_max) / ideal_max) * 50) if ideal_max > 0 else 50
+                else:
+                    score = 100
+            
+            if inverse:
+                score = 100 - score
+            normalized.append(round(min(100, max(0, score)), 1))
+        return normalized
+    
+    # Ideal ranges for drug-likeness
+    radar_data = {
+        "labels": ["Drug-likeness", "Mol. Weight", "LogP", "TPSA", "HBD", "HBA"],
+        "compounds": []
+    }
+    
+    for i, compound in enumerate(results):
+        props = compound["properties"]
+        
+        # Calculate radar scores (higher = better for drug discovery)
+        radar_scores = {
+            "drug_likeness": props["drug_likeness_score"] * 100,
+            "molecular_weight": max(0, 100 - abs(props["molecular_weight"] - 350) / 5),  # Ideal ~350 Da
+            "logP": max(0, 100 - abs(props["logP"] - 2.5) * 15),  # Ideal ~2.5
+            "tpsa": max(0, 100 - abs(props["tpsa"] - 75) / 1.5),  # Ideal ~75
+            "h_bond_donors": max(0, 100 - props["h_bond_donors"] * 15),  # Lower is better (0-5)
+            "h_bond_acceptors": max(0, 100 - props["h_bond_acceptors"] * 8),  # Lower is better (0-10)
+        }
+        
+        radar_data["compounds"].append({
+            "name": compound["name"],
+            "values": [
+                round(radar_scores["drug_likeness"], 1),
+                round(radar_scores["molecular_weight"], 1),
+                round(radar_scores["logP"], 1),
+                round(radar_scores["tpsa"], 1),
+                round(radar_scores["h_bond_donors"], 1),
+                round(radar_scores["h_bond_acceptors"], 1),
+            ]
+        })
+    
+    # Generate comparison summary
+    if len(results) >= 2:
+        best_drug_likeness = max(results, key=lambda x: x["properties"]["drug_likeness_score"])
+        best_absorption = max(results, key=lambda x: x["admet"].get("oral_absorption", {}).get("probability", 0))
+        safest = min(results, key=lambda x: (
+            x["admet"].get("hepatotoxicity_risk", {}).get("risk", 1) +
+            x["admet"].get("cardiotoxicity_risk", {}).get("risk", 1)
+        ))
+        
+        summary = {
+            "best_drug_likeness": best_drug_likeness["name"],
+            "best_absorption": best_absorption["name"],
+            "safest_profile": safest["name"],
+            "total_compared": len(results),
+            "lipinski_compliant": sum(1 for r in results if r["properties"]["lipinski_pass"])
+        }
+    else:
+        summary = {"total_compared": len(results)}
+    
+    logger.info(f"Comparison complete: {len(results)} compounds analyzed")
+    
+    return {
+        "compounds": results,
+        "radar_data": radar_data,
+        "summary": summary
+    }
+
+
 # ==================== REPORT EXPORT ENDPOINTS ====================
 
 from fastapi.responses import StreamingResponse
