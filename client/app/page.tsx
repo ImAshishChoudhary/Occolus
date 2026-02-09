@@ -102,6 +102,47 @@ export default function Home() {
     });
   };
 
+  // Toggle drug for comparison
+  const toggleCompare = (drug: Candidate) => {
+    setCompareList(prev => {
+      const exists = prev.some(d => d.smiles === drug.smiles);
+      if (exists) {
+        return prev.filter(d => d.smiles !== drug.smiles);
+      } else if (prev.length < 5) {
+        return [...prev, drug];
+      }
+      return prev;
+    });
+  };
+
+  const isInCompareList = (smiles: string) => compareList.some(d => d.smiles === smiles);
+
+  // Run comparison analysis
+  const runComparison = useCallback(async () => {
+    if (compareList.length < 2) return;
+    
+    setComparing(true);
+    setShowCompareModal(true);
+    setCompareData(null);
+    
+    try {
+      const response = await fetch(`${apiUrl}/compare-drugs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smiles_list: compareList.map(d => d.smiles),
+          names: compareList.map(d => d.name)
+        })
+      });
+      
+      const data = await response.json();
+      setCompareData(data);
+    } catch (error) {
+      console.error("Comparison error:", error);
+    }
+    setComparing(false);
+  }, [compareList, apiUrl]);
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   // Typing animation
