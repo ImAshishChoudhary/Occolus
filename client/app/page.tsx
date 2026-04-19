@@ -117,6 +117,8 @@ export default function Home() {
 
   const isInCompareList = (smiles: string) => compareList.some(d => d.smiles === smiles);
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   // Run comparison analysis
   const runComparison = useCallback(async () => {
     if (compareList.length < 2) return;
@@ -142,8 +144,6 @@ export default function Home() {
     }
     setComparing(false);
   }, [compareList, apiUrl]);
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   // Typing animation
   useEffect(() => {

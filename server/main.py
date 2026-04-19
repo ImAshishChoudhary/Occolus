@@ -38,7 +38,15 @@ ai_client = genai.Client(api_key=api_key)
 protein_dim = 400  
 drug_dim = 1024 
 model = DrugTargetModel(protein_dim, drug_dim)
-model.load_state_dict(torch.load("drug_target_model.pth"))
+
+model_path = os.path.join(os.path.dirname(__file__), "drug_target_model.pth")
+if os.path.exists(model_path):
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    logger.info("Loaded trained model from drug_target_model.pth")
+else:
+    logger.warning("drug_target_model.pth not found — using randomly initialized weights. Run init_model.py to create one.")
+    torch.save(model.state_dict(), model_path)
+    logger.info(f"Saved initial model weights to {model_path}")
 model.eval()
 
 def fetch_drug_info(drug_name):
